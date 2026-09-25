@@ -73,8 +73,9 @@ Run lint, type check and tests before considering a task done.
 ## Status
 
 Currently in week 1 of 8 (see plan below).
-Done: Next.js app scaffolded, shadcn initialized, repo pushed to GitHub.
-Next: Vercel deploy, README stub, CI (lint + typecheck), then SSB client + tests.
+Done: Next.js app scaffolded, shadcn initialized, repo pushed to GitHub, deployed to Vercel
+(https://number-fjord.vercel.app/), README stub.
+Next: CI (lint + typecheck), then SSB client + tests.
 
 ## 8-week plan (summary)
 
