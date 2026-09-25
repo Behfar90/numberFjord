@@ -66,6 +66,8 @@ Run lint, type check and tests before considering a task done.
   - Breaking changes: `!` after type/scope (e.g. `feat(ssb)!: ...`)
   - Example: `feat(ssb): add queryTable with 429 retry`
 - Work on feature branches, squash-merge PRs into `main`.
+- A Husky pre-commit hook runs ESLint on staged files and `pnpm typecheck`. CI
+  (`.github/workflows/ci.yml`) runs lint and typecheck on every push and PR.
 - Secrets only in `.env.local` and Vercel env vars. Never commit keys. Keep
   `.env.example` updated.
 - Prefer small pure functions with unit tests (e.g. JSON-stat2 → chart data).
