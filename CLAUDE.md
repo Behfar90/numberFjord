@@ -25,7 +25,7 @@ decisions matter as much as features.
 
 - `pnpm dev` – local dev server
 - `pnpm lint` – ESLint
-- `pnpm tsc --noEmit` – type check
+- `pnpm typecheck` – generate Next.js types, then `tsc --noEmit`
 - `pnpm test` – Vitest (once set up)
 
 Run lint, type check and tests before considering a task done.
@@ -66,6 +66,11 @@ Run lint, type check and tests before considering a task done.
   - Breaking changes: `!` after type/scope (e.g. `feat(ssb)!: ...`)
   - Example: `feat(ssb): add queryTable with 429 retry`
 - Work on feature branches, squash-merge PRs into `main`.
+- A Husky pre-commit hook runs ESLint on staged files and `pnpm typecheck`. CI
+  (`.github/workflows/ci.yml`) runs lint and typecheck on every push and PR.
+- `main` ruleset (`.github/rulesets/main-protect.json`): nobody may delete or force-push
+  `main`. Direct pushes are allowed while this is a solo project; add PR, required-check
+  and CODEOWNERS review rules when collaborators join.
 - Secrets only in `.env.local` and Vercel env vars. Never commit keys. Keep
   `.env.example` updated.
 - Prefer small pure functions with unit tests (e.g. JSON-stat2 → chart data).

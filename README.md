@@ -40,7 +40,7 @@ Other commands:
 
 ```bash
 pnpm lint         # ESLint
-pnpm tsc --noEmit # type check
+pnpm typecheck    # type check
 ```
 
 ## Data and attribution
