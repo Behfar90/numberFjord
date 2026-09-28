@@ -47,7 +47,7 @@ export class SsbNotFoundError extends SsbError {
 }
 
 export class SsbInvalidQueryError extends SsbError {
-  constructor(message: string, status: number) {
+  constructor(message: string, status?: number) {
     super(message, "The request to Statistics Norway was not valid.", status);
   }
 }
