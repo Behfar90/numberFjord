@@ -26,7 +26,7 @@ decisions matter as much as features.
 - `pnpm dev` – local dev server
 - `pnpm lint` – ESLint
 - `pnpm typecheck` – generate Next.js types, then `tsc --noEmit`
-- `pnpm test` – Vitest (once set up)
+- `pnpm test` – Vitest (run once); `pnpm test:watch` – watch mode
 
 Run lint, type check and tests before considering a task done.
 
