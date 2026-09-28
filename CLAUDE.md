@@ -66,8 +66,9 @@ Run lint, type check and tests before considering a task done.
   - Breaking changes: `!` after type/scope (e.g. `feat(ssb)!: ...`)
   - Example: `feat(ssb): add queryTable with 429 retry`
 - Work on feature branches, squash-merge PRs into `main`.
-- A Husky pre-commit hook runs ESLint on staged files and `pnpm typecheck`. CI
-  (`.github/workflows/ci.yml`) runs lint and typecheck on every push and PR.
+- Husky hooks: `pre-commit` runs ESLint on staged files and `pnpm typecheck`;
+  `commit-msg` runs commitlint (`commitlint.config.mjs`) to enforce the rules above. CI
+  (`.github/workflows/ci.yml`) runs lint, typecheck and tests on every push and PR.
 - `main` ruleset (`.github/rulesets/main-protect.json`): nobody may delete or force-push
   `main`. Direct pushes are allowed while this is a solo project; add PR, required-check
   and CODEOWNERS review rules when collaborators join.
