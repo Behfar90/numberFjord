@@ -1,4 +1,3 @@
-// Enforces the commit conventions in CLAUDE.md; run by .husky/commit-msg.
 export default {
   extends: ["@commitlint/config-conventional"],
   rules: {

@@ -1,6 +1,4 @@
-// Records real SSB PxWebApi v2 responses into src/lib/ssb/__fixtures__/ for tests.
-// Run with `pnpm fixtures:ssb`. Requests run sequentially with a pause between them
-// to stay well under SSB's limit of 30 requests per minute.
+// Run with `pnpm fixtures:ssb`. Requests are spaced out to respect SSB's 30/minute limit.
 
 import { mkdir, writeFile } from "node:fs/promises";
 
@@ -69,7 +67,6 @@ for (const [i, fixture] of fixtures.entries()) {
     throw new Error(`Unexpected ${res.status} for ${fixture.file}: ${url}`);
   }
 
-  // Error fixtures keep the HTTP status next to the problem+json body.
   const content = fixture.expectError ? { status: res.status, body } : body;
   await writeFile(
     new URL(fixture.file, OUT_DIR),

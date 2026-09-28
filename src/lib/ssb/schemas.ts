@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-// Zod schemas for the parts of SSB PxWebApi v2 responses we rely on.
-// Objects are non-strict: unknown keys are stripped, so new API fields don't break us.
-
-// --- GET /tables (search) ---
-
 export const tableSummarySchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -30,8 +25,6 @@ export const tableSearchResponseSchema = z.object({
 
 export type TableSummary = z.infer<typeof tableSummarySchema>;
 export type TableSearchResponse = z.infer<typeof tableSearchResponseSchema>;
-
-// --- JSON-stat2 dataset (GET /tables/{id}/metadata and /tables/{id}/data) ---
 
 const codelistSchema = z.object({
   id: z.string(),
@@ -81,7 +74,6 @@ export const jsonStatDatasetSchema = z
     dimension: z.record(z.string(), dimensionSchema),
     // Metadata responses send an empty array; missing cells are null.
     value: z.array(z.number().nullable()),
-    // Cell index → symbol (e.g. ".." not available), only present when needed.
     status: z.record(z.string(), z.string()).optional(),
   })
   .superRefine((ds, ctx) => {
@@ -107,8 +99,6 @@ export const jsonStatDatasetSchema = z
 
 export type JsonStatDataset = z.infer<typeof jsonStatDatasetSchema>;
 export type JsonStatDimension = z.infer<typeof dimensionSchema>;
-
-// --- Errors (problem+json) ---
 
 export const problemSchema = z.object({
   type: z.string().optional(),
