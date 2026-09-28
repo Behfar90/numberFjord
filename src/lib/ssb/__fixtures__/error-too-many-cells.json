@@ -1,0 +1,9 @@
+{
+  "status": 400,
+  "body": {
+    "type": "Parameter error",
+    "title": "Too many cells selected",
+    "status": 400,
+    "detail": "Too many cells selected"
+  }
+}

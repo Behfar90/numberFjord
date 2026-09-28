@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "prepare": "husky",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "fixtures:ssb": "node scripts/record-ssb-fixtures.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

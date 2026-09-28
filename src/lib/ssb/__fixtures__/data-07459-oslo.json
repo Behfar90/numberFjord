@@ -1,0 +1,220 @@
+{
+  "version": "2.0",
+  "class": "dataset",
+  "label": "07459: Population, by region, sex, age and year",
+  "source": "Statistics Norway",
+  "updated": "2026-02-25T07:00:00Z",
+  "note": [
+    "Expired municipalities in the period 1986-2013 are not included in the table that distributes people in Police districts 2016. The figures for several of the Police districts 2016 are therefore not complete for this period."
+  ],
+  "role": {
+    "time": [
+      "Tid"
+    ],
+    "geo": [
+      "Region"
+    ],
+    "metric": [
+      "ContentsCode"
+    ]
+  },
+  "id": [
+    "Region",
+    "Kjonn",
+    "Alder",
+    "ContentsCode",
+    "Tid"
+  ],
+  "size": [
+    1,
+    2,
+    3,
+    1,
+    2
+  ],
+  "dimension": {
+    "Region": {
+      "label": "region",
+      "note": [
+        "[See list over changes in regional classifications](https://www.ssb.no/offentlig-sektor/kommunekatalog/endringer-i-de-regionale-inndelingene) (in Norwegian).\n"
+      ],
+      "category": {
+        "index": {
+          "0301": 0
+        },
+        "label": {
+          "0301": "Oslo - Oslove"
+        }
+      },
+      "extension": {
+        "elimination": false,
+        "show": "code_value"
+      },
+      "link": {
+        "describedby": [
+          {
+            "extension": {
+              "Region": "urn:ssb:classification:klass:104 urn:ssb:classification:klass:131"
+            }
+          }
+        ]
+      }
+    },
+    "Kjonn": {
+      "label": "sex",
+      "category": {
+        "index": {
+          "1": 0,
+          "2": 1
+        },
+        "label": {
+          "1": "Males",
+          "2": "Females"
+        }
+      },
+      "extension": {
+        "elimination": true,
+        "show": "value"
+      },
+      "link": {
+        "describedby": [
+          {
+            "extension": {
+              "Kjonn": "urn:ssb:classification:klass:2"
+            }
+          }
+        ]
+      }
+    },
+    "Alder": {
+      "label": "age",
+      "category": {
+        "index": {
+          "F0-19": 0,
+          "F20-64": 1,
+          "F65+": 2
+        },
+        "label": {
+          "F0-19": "0-19 years",
+          "F20-64": "20-64 years",
+          "F65+": "65 years or older"
+        }
+      },
+      "extension": {
+        "elimination": false,
+        "show": "value"
+      },
+      "link": {
+        "describedby": [
+          {
+            "extension": {
+              "Alder": "urn:ssb:classification:klass:282"
+            }
+          }
+        ]
+      }
+    },
+    "ContentsCode": {
+      "label": "contents",
+      "category": {
+        "index": {
+          "Personer1": 0
+        },
+        "label": {
+          "Personer1": "Persons"
+        },
+        "unit": {
+          "Personer1": {
+            "base": "number",
+            "decimals": 0
+          }
+        }
+      },
+      "extension": {
+        "elimination": false,
+        "refperiod": {
+          "Personer1": "1.1."
+        },
+        "show": "value",
+        "measuringType": {
+          "Personer1": "Stock"
+        },
+        "priceType": {
+          "Personer1": "NotApplicable"
+        },
+        "adjustment": {
+          "Personer1": "None"
+        },
+        "alternativeText": {
+          "Personer1": "Persons"
+        }
+      }
+    },
+    "Tid": {
+      "label": "year",
+      "category": {
+        "index": {
+          "2025": 0,
+          "2026": 1
+        },
+        "label": {
+          "2025": "2025",
+          "2026": "2026"
+        }
+      },
+      "extension": {
+        "elimination": false,
+        "show": "code"
+      }
+    }
+  },
+  "extension": {
+    "px": {
+      "infofile": "None",
+      "tableid": "07459",
+      "decimals": 0,
+      "official-statistics": true,
+      "aggregallowed": true,
+      "copyright": false,
+      "language": "en",
+      "contents": "07459: Population,",
+      "descriptiondefault": false,
+      "heading": [
+        "ContentsCode",
+        "Tid"
+      ],
+      "stub": [
+        "Region",
+        "Kjonn",
+        "Alder"
+      ],
+      "matrix": "07459",
+      "subject-code": "be",
+      "subject-area": "Population"
+    },
+    "discontinued": null,
+    "contact": [
+      {
+        "name": "Magnus Haug",
+        "organization": "Statistics Norway",
+        "phone": "40 81 14 91",
+        "mail": "mgh@ssb.no",
+        "raw": "Magnus Haug, Statistics Norway# +47 40 81 14 91#mgh@ssb.no"
+      }
+    ]
+  },
+  "value": [
+    74911,
+    74966,
+    241808,
+    242146,
+    44178,
+    45495,
+    71700,
+    71766,
+    238903,
+    240483,
+    52790,
+    53858
+  ]
+}

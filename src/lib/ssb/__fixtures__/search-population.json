@@ -1,0 +1,491 @@
+{
+  "language": "en",
+  "tables": [
+    {
+      "id": "05212",
+      "label": "05212: Population in densely and sparsely populated areas, by sex (M) 1990-2026",
+      "description": "",
+      "sortCode": "0000000010",
+      "updated": "2026-08-31T06:00:00Z",
+      "firstPeriod": "1990",
+      "lastPeriod": "2026",
+      "category": "public",
+      "variableNames": [
+        "region",
+        "densely/sparsely populated areas",
+        "sex",
+        "contents",
+        "year"
+      ],
+      "source": "Statistics Norway",
+      "subjectCode": "be",
+      "timeUnit": "Annual",
+      "paths": [
+        [
+          {
+            "id": "be",
+            "label": "Population",
+            "sortCode": "0000016"
+          },
+          {
+            "id": "be05",
+            "label": "Population count",
+            "sortCode": "0000020"
+          },
+          {
+            "id": "beftett",
+            "label": "Population and land area in urban settlements",
+            "sortCode": "0000021"
+          }
+        ],
+        [
+          {
+            "id": "nm",
+            "label": "Nature and the environment",
+            "sortCode": "0000070"
+          },
+          {
+            "id": "nm01",
+            "label": "Area",
+            "sortCode": "0000071"
+          },
+          {
+            "id": "beftett",
+            "label": "Population and land area in urban settlements",
+            "sortCode": "0000072"
+          }
+        ]
+      ],
+      "links": [
+        {
+          "rel": "self",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/05212?lang=en"
+        },
+        {
+          "rel": "alternate",
+          "hreflang": "no",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/05212?lang=no"
+        },
+        {
+          "rel": "metadata",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/05212/metadata?lang=en"
+        },
+        {
+          "rel": "data",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/05212/data?lang=en&outputFormat=json-stat2"
+        }
+      ]
+    },
+    {
+      "id": "12598",
+      "label": "12598: Income indicators for different low income groups (per cent) 2008-2024",
+      "description": "",
+      "sortCode": "0000006030",
+      "updated": "2026-01-16T07:00:00Z",
+      "firstPeriod": "2008",
+      "lastPeriod": "2024",
+      "category": "public",
+      "variableNames": [
+        "group",
+        "population",
+        "contents",
+        "year"
+      ],
+      "source": "Statistics Norway",
+      "subjectCode": "if",
+      "timeUnit": "Annual",
+      "paths": [
+        [
+          {
+            "id": "if",
+            "label": "Income and consumption",
+            "sortCode": "0000038"
+          },
+          {
+            "id": "if02",
+            "label": "Income and wealth",
+            "sortCode": "0000040"
+          },
+          {
+            "id": "ifhus",
+            "label": "Income and wealth for households",
+            "sortCode": "0000041"
+          },
+          {
+            "id": "SBMENU2486",
+            "label": "At-Risk-of-Low Income",
+            "sortCode": "0000003500"
+          }
+        ],
+        [
+          {
+            "id": "in",
+            "label": "Immigration and immigrants",
+            "sortCode": "0000042"
+          },
+          {
+            "id": "in06",
+            "label": "Income and consumption",
+            "sortCode": "0000048"
+          },
+          {
+            "id": "ifhus",
+            "label": "Income and wealth for households",
+            "sortCode": "0000049"
+          },
+          {
+            "id": "SBMENU2486",
+            "label": "At-Risk-of-Low Income",
+            "sortCode": "0000003500"
+          }
+        ]
+      ],
+      "links": [
+        {
+          "rel": "self",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/12598?lang=en"
+        },
+        {
+          "rel": "alternate",
+          "hreflang": "no",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/12598?lang=no"
+        },
+        {
+          "rel": "metadata",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/12598/metadata?lang=en"
+        },
+        {
+          "rel": "data",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/12598/data?lang=en&outputFormat=json-stat2"
+        }
+      ]
+    },
+    {
+      "id": "06830",
+      "label": "06830: Dwellings, by type of building and densely/sparsely populated areas (M) 2006-2026",
+      "description": "",
+      "sortCode": "0000000065",
+      "updated": "2026-09-16T06:00:00Z",
+      "firstPeriod": "2006",
+      "lastPeriod": "2026",
+      "category": "public",
+      "variableNames": [
+        "region",
+        "type of building",
+        "densely/sparsely populated areas",
+        "contents",
+        "year"
+      ],
+      "source": "Statistics Norway",
+      "subjectCode": "bb",
+      "timeUnit": "Annual",
+      "paths": [
+        [
+          {
+            "id": "bb",
+            "label": "Construction, housing and property",
+            "sortCode": "0000026"
+          },
+          {
+            "id": "bb01",
+            "label": "Dwelling and housing conditions",
+            "sortCode": "0000027"
+          },
+          {
+            "id": "boligstat",
+            "label": "Dwellings",
+            "sortCode": "0000028"
+          }
+        ],
+        [
+          {
+            "id": "sv",
+            "label": "Svalbard",
+            "sortCode": "0000093"
+          },
+          {
+            "id": "sv02",
+            "label": "Population & housing",
+            "sortCode": "0000095"
+          },
+          {
+            "id": "boligstat",
+            "label": "Dwellings",
+            "sortCode": "0000096"
+          }
+        ]
+      ],
+      "links": [
+        {
+          "rel": "self",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/06830?lang=en"
+        },
+        {
+          "rel": "alternate",
+          "hreflang": "no",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/06830?lang=no"
+        },
+        {
+          "rel": "metadata",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/06830/metadata?lang=en"
+        },
+        {
+          "rel": "data",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/06830/data?lang=en&outputFormat=json-stat2"
+        }
+      ]
+    },
+    {
+      "id": "14780",
+      "label": "14780: Preliminary statistics on personal income from wages, pensions and disability benefits, by gender. Taxable persons. Number of persons, average (NOK), median (NOK) and total (NOK million) (M) 2024-2025",
+      "description": "",
+      "sortCode": "0000000110",
+      "updated": "2026-05-18T06:00:00Z",
+      "firstPeriod": "2024",
+      "lastPeriod": "2025",
+      "category": "public",
+      "variableNames": [
+        "region",
+        "tax components",
+        "sex",
+        "population",
+        "contents",
+        "year"
+      ],
+      "source": "Statistics Norway",
+      "subjectCode": "if",
+      "timeUnit": "Annual",
+      "paths": [
+        [
+          {
+            "id": "if",
+            "label": "Income and consumption",
+            "sortCode": "0000038"
+          },
+          {
+            "id": "if02",
+            "label": "Income and wealth",
+            "sortCode": "0000040"
+          },
+          {
+            "id": "selvangivelse",
+            "label": "Tax for personal taxpayers",
+            "sortCode": "0000041"
+          },
+          {
+            "id": "SBMENU1240",
+            "label": "Preliminary statistics",
+            "sortCode": "0000000100"
+          }
+        ],
+        [
+          {
+            "id": "if",
+            "label": "Income and consumption",
+            "sortCode": "0000038"
+          },
+          {
+            "id": "if03",
+            "label": "Personal tax",
+            "sortCode": "0000041"
+          },
+          {
+            "id": "selvangivelse",
+            "label": "Tax for personal taxpayers",
+            "sortCode": "0000042"
+          },
+          {
+            "id": "SBMENU1240",
+            "label": "Preliminary statistics",
+            "sortCode": "0000000100"
+          }
+        ],
+        [
+          {
+            "id": "sv",
+            "label": "Svalbard",
+            "sortCode": "0000093"
+          },
+          {
+            "id": "sv01",
+            "label": "Labour market, earnings & education",
+            "sortCode": "0000094"
+          },
+          {
+            "id": "selvangivelse",
+            "label": "Tax for personal taxpayers",
+            "sortCode": "0000095"
+          },
+          {
+            "id": "SBMENU1240",
+            "label": "Preliminary statistics",
+            "sortCode": "0000000100"
+          }
+        ]
+      ],
+      "links": [
+        {
+          "rel": "self",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/14780?lang=en"
+        },
+        {
+          "rel": "alternate",
+          "hreflang": "no",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/14780?lang=no"
+        },
+        {
+          "rel": "metadata",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/14780/metadata?lang=en"
+        },
+        {
+          "rel": "data",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/14780/data?lang=en&outputFormat=json-stat2"
+        }
+      ]
+    },
+    {
+      "id": "07236",
+      "label": "07236: Mean population and population changes per 1000 population 1997K4-2026K2",
+      "description": "",
+      "sortCode": "0000800330",
+      "updated": "2026-08-19T06:00:00Z",
+      "firstPeriod": "1997K4",
+      "lastPeriod": "2026K2",
+      "category": "public",
+      "variableNames": [
+        "contents",
+        "quarter"
+      ],
+      "source": "Statistics Norway",
+      "subjectCode": "be",
+      "timeUnit": "Quarterly",
+      "paths": [
+        [
+          {
+            "id": "be",
+            "label": "Population",
+            "sortCode": "0000016"
+          },
+          {
+            "id": "be01",
+            "label": "Children, families and households",
+            "sortCode": "0000017"
+          },
+          {
+            "id": "folkemengde",
+            "label": "Population",
+            "sortCode": "0000018"
+          },
+          {
+            "id": "SBMENU6920",
+            "label": "Mean population",
+            "sortCode": "0000800000"
+          }
+        ],
+        [
+          {
+            "id": "be",
+            "label": "Population",
+            "sortCode": "0000016"
+          },
+          {
+            "id": "be05",
+            "label": "Population count",
+            "sortCode": "0000020"
+          },
+          {
+            "id": "folkemengde",
+            "label": "Population",
+            "sortCode": "0000021"
+          },
+          {
+            "id": "SBMENU6920",
+            "label": "Mean population",
+            "sortCode": "0000800000"
+          }
+        ],
+        [
+          {
+            "id": "in",
+            "label": "Immigration and immigrants",
+            "sortCode": "0000042"
+          },
+          {
+            "id": "in03",
+            "label": "Population",
+            "sortCode": "0000045"
+          },
+          {
+            "id": "folkemengde",
+            "label": "Population",
+            "sortCode": "0000046"
+          },
+          {
+            "id": "SBMENU6920",
+            "label": "Mean population",
+            "sortCode": "0000800000"
+          }
+        ]
+      ],
+      "links": [
+        {
+          "rel": "self",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/07236?lang=en"
+        },
+        {
+          "rel": "alternate",
+          "hreflang": "no",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/07236?lang=no"
+        },
+        {
+          "rel": "metadata",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/07236/metadata?lang=en"
+        },
+        {
+          "rel": "data",
+          "hreflang": "en",
+          "href": "https://data.ssb.no/api/pxwebapi/v2/tables/07236/data?lang=en&outputFormat=json-stat2"
+        }
+      ]
+    }
+  ],
+  "page": {
+    "pageNumber": 1,
+    "pageSize": 5,
+    "totalElements": 395,
+    "totalPages": 79,
+    "links": [
+      {
+        "rel": "next",
+        "hreflang": "en",
+        "href": "https://data.ssb.no/api/pxwebapi/v2/tables/?lang=en&query=population&pagesize=5&pageNumber=2"
+      },
+      {
+        "rel": "last",
+        "hreflang": "en",
+        "href": "https://data.ssb.no/api/pxwebapi/v2/tables/?lang=en&query=population&pagesize=5&pageNumber=79"
+      }
+    ]
+  },
+  "links": [
+    {
+      "rel": "self",
+      "hreflang": "en",
+      "href": "https://data.ssb.no/api/pxwebapi/v2/tables/?lang=en&query=population&pagesize=5&pageNumber=1"
+    }
+  ]
+}

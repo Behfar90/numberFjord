@@ -1,0 +1,8 @@
+{
+  "status": 404,
+  "body": {
+    "type": "Parameter error",
+    "title": "Non-existent table",
+    "status": 404
+  }
+}
