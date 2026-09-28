@@ -1,5 +1,5 @@
 import { SsbInvalidQueryError, SsbTooLargeError } from "./errors";
-import { ssbFetch, type Lang, type SsbFetchOptions } from "./http";
+import { ssbFetch, type HttpConfig, type RequestOptions } from "./http";
 import {
   jsonStatDatasetSchema,
   tableSearchResponseSchema,
@@ -8,7 +8,11 @@ import {
   type TableSummary,
 } from "./schemas";
 
-export const MAX_CELLS = 800_000;
+export interface PxConfig extends HttpConfig {
+  maxCells: number;
+  tableIdPattern: RegExp;
+  tableUrl: (tableId: string, lang: string) => string;
+}
 
 export interface DimensionValue {
   code: string;
@@ -30,13 +34,14 @@ export interface TableMetadata {
   dimensions: Dimension[];
   timeDimension: string | undefined;
   geoDimension: string | undefined;
+  source: string;
   tableUrl: string;
 }
 
 export type DimensionSelection = string[] | "*" | { top: number };
 export type Selection = Record<string, DimensionSelection>;
 
-export interface QueryOptions extends SsbFetchOptions {
+export interface QueryOptions extends RequestOptions {
   codelists?: Record<string, string>;
   // Lets the cell-count check resolve "*" to a real count.
   metadata?: TableMetadata;
@@ -45,71 +50,97 @@ export interface QueryOptions extends SsbFetchOptions {
 export interface QueryResult {
   tableId: string;
   dataset: JsonStatDataset;
+  source: string;
   sourceUrl: string;
   tableUrl: string;
 }
 
-export async function searchTables(
-  query: string,
-  { pageSize = 10, ...options }: SsbFetchOptions & { pageSize?: number } = {},
-): Promise<TableSummary[]> {
-  const { data } = await ssbFetch(
-    "/tables",
-    { query, pageSize: String(pageSize) },
-    tableSearchResponseSchema,
-    options,
-  );
-  return data.tables;
-}
+export type PxClient = ReturnType<typeof createPxClient>;
 
-export async function getTableMetadata(
-  tableId: string,
-  options: SsbFetchOptions = {},
-): Promise<TableMetadata> {
-  assertTableId(tableId);
-  const { data } = await ssbFetch(
-    `/tables/${tableId}/metadata`,
-    {},
-    jsonStatDatasetSchema,
-    options,
-  );
-  return {
-    id: tableId,
-    label: data.label,
-    updated: data.updated,
-    dimensions: data.id.map((code) => toDimension(code, data.dimension[code])),
-    timeDimension: data.role?.time?.[0],
-    geoDimension: data.role?.geo?.[0],
-    tableUrl: tableUrl(tableId, options.lang),
-  };
-}
+export function createPxClient(config: PxConfig) {
+  const { sourceName: source, lang, maxCells } = config;
 
-export async function queryTable(
-  tableId: string,
-  selection: Selection,
-  { codelists = {}, metadata, ...options }: QueryOptions = {},
-): Promise<QueryResult> {
-  assertTableId(tableId);
-
-  const cells = estimateCells(selection, metadata);
-  if (cells !== undefined && cells > MAX_CELLS) {
-    throw new SsbTooLargeError(
-      `Selection on table ${tableId} is about ${cells} cells, over the ${MAX_CELLS} limit`,
-    );
+  function assertTableId(tableId: string): void {
+    if (!config.tableIdPattern.test(tableId)) {
+      throw new SsbInvalidQueryError(
+        source,
+        `Invalid table id "${tableId}" for ${source}`,
+      );
+    }
   }
 
-  const { data, url } = await ssbFetch(
-    `/tables/${tableId}/data`,
-    toQueryParams(selection, codelists),
-    jsonStatDatasetSchema,
-    options,
-  );
-  return {
-    tableId,
-    dataset: data,
-    sourceUrl: url,
-    tableUrl: tableUrl(tableId, options.lang),
-  };
+  async function searchTables(
+    query: string,
+    { pageSize = 10, ...options }: RequestOptions & { pageSize?: number } = {},
+  ): Promise<TableSummary[]> {
+    const { data } = await ssbFetch(
+      config,
+      "/tables",
+      { query, pageSize: String(pageSize) },
+      tableSearchResponseSchema,
+      options,
+    );
+    return data.tables;
+  }
+
+  async function getTableMetadata(
+    tableId: string,
+    options: RequestOptions = {},
+  ): Promise<TableMetadata> {
+    assertTableId(tableId);
+    const { data } = await ssbFetch(
+      config,
+      `/tables/${tableId}/metadata`,
+      {},
+      jsonStatDatasetSchema,
+      options,
+    );
+    return {
+      id: tableId,
+      label: data.label,
+      updated: data.updated,
+      dimensions: data.id.map((code) =>
+        toDimension(code, data.dimension[code]),
+      ),
+      timeDimension: data.role?.time?.[0],
+      geoDimension: data.role?.geo?.[0],
+      source,
+      tableUrl: config.tableUrl(tableId, lang),
+    };
+  }
+
+  async function queryTable(
+    tableId: string,
+    selection: Selection,
+    { codelists = {}, metadata, ...options }: QueryOptions = {},
+  ): Promise<QueryResult> {
+    assertTableId(tableId);
+
+    const cells = estimateCells(selection, metadata);
+    if (cells !== undefined && cells > maxCells) {
+      throw new SsbTooLargeError(
+        source,
+        `Selection on table ${tableId} is about ${cells} cells, over the ${maxCells} limit`,
+      );
+    }
+
+    const { data, url } = await ssbFetch(
+      config,
+      `/tables/${tableId}/data`,
+      toQueryParams(selection, codelists),
+      jsonStatDatasetSchema,
+      options,
+    );
+    return {
+      tableId,
+      dataset: data,
+      source,
+      sourceUrl: url,
+      tableUrl: config.tableUrl(tableId, lang),
+    };
+  }
+
+  return { config, searchTables, getTableMetadata, queryTable };
 }
 
 export function toQueryParams(
@@ -132,7 +163,7 @@ export function toQueryParams(
 }
 
 // Undefined when "*" is used without metadata: the count can't be known,
-// so SSB's own 400 "Too many cells" response is the fallback.
+// so the API's own 400 "Too many cells" response is the fallback.
 export function estimateCells(
   selection: Selection,
   metadata?: TableMetadata,
@@ -149,19 +180,6 @@ export function estimateCells(
     }
   }
   return cells;
-}
-
-export function tableUrl(tableId: string, lang: Lang = "en"): string {
-  const prefix = lang === "en" ? "/en" : "";
-  return `https://www.ssb.no${prefix}/statbank/table/${tableId}`;
-}
-
-function assertTableId(tableId: string): void {
-  if (!/^\d{5}$/.test(tableId)) {
-    throw new SsbInvalidQueryError(
-      `Invalid table id "${tableId}": expected 5 digits`,
-    );
-  }
 }
 
 function toDimension(code: string, dim: JsonStatDimension): Dimension {

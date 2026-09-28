@@ -8,7 +8,7 @@ import {
   SsbRateLimitError,
   SsbUnavailableError,
 } from "./errors";
-import { buildUrl, retryDelayMs, ssbFetch } from "./http";
+import { buildUrl, retryDelayMs, ssbFetch, type HttpConfig } from "./http";
 import { tableSearchResponseSchema } from "./schemas";
 
 // Every test injects a fake fetch and sleep: no real network, no real waiting.
@@ -35,17 +35,28 @@ function setup(...responses: (Response | Error)[]) {
   return { fetch, sleep };
 }
 
-const searchPopulation = (options: Parameters<typeof ssbFetch>[3]) =>
+const CONFIG: HttpConfig = {
+  baseUrl: "https://data.ssb.no/api/pxwebapi/v2",
+  lang: "en",
+  sourceName: "Statistics Norway",
+};
+
+const searchPopulation = (
+  deps: Pick<HttpConfig, "fetch" | "sleep">,
+  signal?: AbortSignal,
+) =>
   ssbFetch(
+    { ...CONFIG, ...deps },
     "/tables",
     { query: "population" },
     tableSearchResponseSchema,
-    options,
+    { signal },
   );
 
 describe("buildUrl", () => {
   it("adds lang and encodes bracketed query params", () => {
     const url = buildUrl(
+      CONFIG.baseUrl,
       "/tables/07459/data",
       { "valueCodes[Tid]": "top(2)" },
       "en",
@@ -141,7 +152,7 @@ describe("ssbFetch", () => {
     const { fetch, sleep } = setup(abort);
 
     await expect(
-      searchPopulation({ fetch, sleep, signal: controller.signal }),
+      searchPopulation({ fetch, sleep }, controller.signal),
     ).rejects.toBe(abort);
   });
 

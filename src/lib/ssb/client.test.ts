@@ -5,15 +5,18 @@ import errorTooManyCells from "./__fixtures__/error-too-many-cells.json";
 import metadata from "./__fixtures__/metadata-07459.json";
 import search from "./__fixtures__/search-population.json";
 import {
+  createPxClient,
   estimateCells,
-  getTableMetadata,
-  queryTable,
-  searchTables,
-  tableUrl,
   toQueryParams,
+  type PxConfig,
   type TableMetadata,
 } from "./client";
-import { SsbInvalidQueryError, SsbTooLargeError } from "./errors";
+import {
+  SsbInvalidQueryError,
+  SsbNotFoundError,
+  SsbTooLargeError,
+} from "./errors";
+import { SSB_CONFIG } from "./index";
 
 function fakeFetch(body: unknown, status = 200) {
   return vi
@@ -21,17 +24,22 @@ function fakeFetch(body: unknown, status = 200) {
     .mockResolvedValue(new Response(JSON.stringify(body), { status }));
 }
 
+const clientWith = (fetch: typeof globalThis.fetch, config = SSB_CONFIG) =>
+  createPxClient({ ...config, fetch });
+
 const requestedUrl = (fetch: ReturnType<typeof fakeFetch>) =>
   decodeURIComponent(String(fetch.mock.calls[0][0]));
 
 async function loadMetadata(): Promise<TableMetadata> {
-  return getTableMetadata("07459", { fetch: fakeFetch(metadata) });
+  return clientWith(fakeFetch(metadata)).getTableMetadata("07459");
 }
 
 describe("searchTables", () => {
   it("queries /tables and returns the table summaries", async () => {
     const fetch = fakeFetch(search);
-    const tables = await searchTables("population", { pageSize: 5, fetch });
+    const tables = await clientWith(fetch).searchTables("population", {
+      pageSize: 5,
+    });
 
     expect(requestedUrl(fetch)).toBe(
       "https://data.ssb.no/api/pxwebapi/v2/tables?lang=en&query=population&pageSize=5",
@@ -72,13 +80,14 @@ describe("getTableMetadata", () => {
     });
     expect(meta.timeDimension).toBe("Tid");
     expect(meta.geoDimension).toBe("Region");
+    expect(meta.source).toBe("Statistics Norway");
     expect(meta.tableUrl).toBe("https://www.ssb.no/en/statbank/table/07459");
   });
 
   it("rejects a malformed table id without calling SSB", async () => {
     const fetch = fakeFetch(metadata);
     await expect(
-      getTableMetadata("../07459", { fetch }),
+      clientWith(fetch).getTableMetadata("../07459"),
     ).rejects.toBeInstanceOf(SsbInvalidQueryError);
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -87,7 +96,7 @@ describe("getTableMetadata", () => {
 describe("queryTable", () => {
   it("builds the data url and returns the dataset with source links", async () => {
     const fetch = fakeFetch(data);
-    const result = await queryTable(
+    const result = await clientWith(fetch).queryTable(
       "07459",
       {
         Region: ["0301"],
@@ -96,7 +105,7 @@ describe("queryTable", () => {
         ContentsCode: ["Personer1"],
         Tid: { top: 2 },
       },
-      { codelists: { Alder: "agg_TredeltGrupperingB2" }, fetch },
+      { codelists: { Alder: "agg_TredeltGrupperingB2" } },
     );
 
     expect(requestedUrl(fetch)).toBe(
@@ -106,6 +115,7 @@ describe("queryTable", () => {
         "&codelist[Alder]=agg_TredeltGrupperingB2",
     );
     expect(result.dataset.value).toHaveLength(12);
+    expect(result.source).toBe("Statistics Norway");
     expect(result.sourceUrl).toBe(String(fetch.mock.calls[0][0]));
     expect(result.tableUrl).toBe("https://www.ssb.no/en/statbank/table/07459");
   });
@@ -118,7 +128,7 @@ describe("queryTable", () => {
     );
 
     await expect(
-      queryTable("07459", everything, { metadata: meta, fetch }),
+      clientWith(fetch).queryTable("07459", everything, { metadata: meta }),
     ).rejects.toBeInstanceOf(SsbTooLargeError);
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -126,7 +136,7 @@ describe("queryTable", () => {
   it("falls back to SSB's own 'too many cells' error without metadata", async () => {
     const fetch = fakeFetch(errorTooManyCells.body, errorTooManyCells.status);
     await expect(
-      queryTable("07459", { Region: "*", Tid: "*" }, { fetch }),
+      clientWith(fetch).queryTable("07459", { Region: "*", Tid: "*" }),
     ).rejects.toBeInstanceOf(SsbTooLargeError);
     expect(fetch).toHaveBeenCalledOnce();
   });
@@ -163,13 +173,63 @@ describe("estimateCells", () => {
   });
 });
 
-describe("tableUrl", () => {
+describe("SSB_CONFIG.tableUrl", () => {
   it("links to the English or Norwegian StatBank page", () => {
-    expect(tableUrl("07459")).toBe(
+    expect(SSB_CONFIG.tableUrl("07459", "en")).toBe(
       "https://www.ssb.no/en/statbank/table/07459",
     );
-    expect(tableUrl("07459", "no")).toBe(
+    expect(SSB_CONFIG.tableUrl("07459", "no")).toBe(
       "https://www.ssb.no/statbank/table/07459",
+    );
+  });
+});
+
+describe("createPxClient with another PxWebApi host", () => {
+  const SCB_CONFIG: PxConfig = {
+    baseUrl: "https://api.scb.se/OV0104/v2beta/api/v2",
+    lang: "sv",
+    sourceName: "Statistics Sweden",
+    maxCells: 150_000,
+    tableIdPattern: /^TAB\d+$/,
+    tableUrl: (id) => `https://example.org/scb/table/${id}`,
+  };
+
+  it("uses that host's url, language, id format and citation link", async () => {
+    const fetch = fakeFetch(metadata);
+    const meta = await clientWith(fetch, SCB_CONFIG).getTableMetadata(
+      "TAB6473",
+    );
+
+    expect(requestedUrl(fetch)).toBe(
+      "https://api.scb.se/OV0104/v2beta/api/v2/tables/TAB6473/metadata?lang=sv",
+    );
+    expect(meta.source).toBe("Statistics Sweden");
+    expect(meta.tableUrl).toBe("https://example.org/scb/table/TAB6473");
+  });
+
+  it("rejects ids that only fit another host", async () => {
+    const fetch = fakeFetch(metadata);
+    await expect(
+      clientWith(fetch, SCB_CONFIG).getTableMetadata("07459"),
+    ).rejects.toBeInstanceOf(SsbInvalidQueryError);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("applies its own cell limit and names itself in errors", async () => {
+    const client = clientWith(fakeFetch(data), SCB_CONFIG);
+    const tooBig = { A: { top: 1000 }, B: { top: 200 } };
+    await expect(client.queryTable("TAB6473", tooBig)).rejects.toBeInstanceOf(
+      SsbTooLargeError,
+    );
+
+    const notFound = clientWith(
+      fakeFetch({ title: "x", status: 404 }, 404),
+      SCB_CONFIG,
+    );
+    const err = await notFound.getTableMetadata("TAB1").catch((e) => e);
+    expect(err).toBeInstanceOf(SsbNotFoundError);
+    expect(err.userMessage).toBe(
+      "That Statistics Sweden table could not be found.",
     );
   });
 });

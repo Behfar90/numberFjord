@@ -20,70 +20,79 @@ export class SsbError extends Error {
 }
 
 export class SsbRateLimitError extends SsbError {
-  constructor(message = "Rate limited by SSB (429)") {
+  constructor(source: string, message = `Rate limited by ${source} (429)`) {
     super(
       message,
-      "Statistics Norway is receiving too many requests right now. Please try again in a minute.",
+      `${source} is receiving too many requests right now. Please try again in a minute.`,
       429,
     );
   }
 }
 
-/** 403, or 400 "Too many cells selected": the query exceeds 800,000 cells. */
 export class SsbTooLargeError extends SsbError {
-  constructor(message: string, status?: number) {
+  constructor(source: string, message: string, status?: number) {
     super(
       message,
-      "That question needs more data than Statistics Norway allows in one request. Try narrowing it down, for example to fewer years or regions.",
+      `That question needs more data than ${source} allows in one request. Try narrowing it down, for example to fewer years or regions.`,
       status,
     );
   }
 }
 
 export class SsbNotFoundError extends SsbError {
-  constructor(message: string) {
-    super(message, "That Statistics Norway table could not be found.", 404);
+  constructor(source: string, message: string) {
+    super(message, `That ${source} table could not be found.`, 404);
   }
 }
 
 export class SsbInvalidQueryError extends SsbError {
-  constructor(message: string, status?: number) {
-    super(message, "The request to Statistics Norway was not valid.", status);
+  constructor(source: string, message: string, status?: number) {
+    super(message, `The request to ${source} was not valid.`, status);
   }
 }
 
 export class SsbUnavailableError extends SsbError {
-  constructor(message: string, status?: number, options?: ErrorOptions) {
+  constructor(
+    source: string,
+    message: string,
+    status?: number,
+    options?: ErrorOptions,
+  ) {
     super(
       message,
-      "Statistics Norway is temporarily unavailable. Please try again in a few minutes.",
+      `${source} is temporarily unavailable. Please try again in a few minutes.`,
       status,
       options,
     );
   }
 }
 
+// PxWebApi reports an oversized query as 400 "Too many cells selected", not 403.
 const TOO_MANY_CELLS = /too many cells/i;
 
-export function toSsbError(status: number, body: unknown): SsbError {
+export function toSsbError(
+  source: string,
+  status: number,
+  body: unknown,
+): SsbError {
   const problem = problemSchema.safeParse(body);
   const detail = problem.success
     ? [problem.data.title, problem.data.detail].filter(Boolean).join(": ")
     : "no problem details";
-  const message = `SSB responded ${status}: ${detail}`;
+  const message = `${source} responded ${status}: ${detail}`;
 
-  if (status === 429) return new SsbRateLimitError(message);
-  if (status === 404) return new SsbNotFoundError(message);
-  if (status === 403) return new SsbTooLargeError(message, status);
+  if (status === 429) return new SsbRateLimitError(source, message);
+  if (status === 404) return new SsbNotFoundError(source, message);
+  if (status === 403) return new SsbTooLargeError(source, message, status);
   if (
     status === 400 &&
     problem.success &&
     TOO_MANY_CELLS.test(problem.data.title)
   ) {
-    return new SsbTooLargeError(message, status);
+    return new SsbTooLargeError(source, message, status);
   }
   if (status >= 400 && status < 500) {
-    return new SsbInvalidQueryError(message, status);
+    return new SsbInvalidQueryError(source, message, status);
   }
-  return new SsbUnavailableError(message, status);
+  return new SsbUnavailableError(source, message, status);
 }

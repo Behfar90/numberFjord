@@ -32,7 +32,9 @@ Run lint, type check and tests before considering a task done.
 
 ## Planned structure
 
-- `src/lib/ssb/` – typed SSB client: `searchTables`, `getTableMetadata`, `queryTable`
+- `src/lib/ssb/` – typed PxWebApi v2 client: `createPxClient(config)` returns
+  `searchTables`, `getTableMetadata`, `queryTable`; `ssb` (in `index.ts`) is the SSB
+  instance. Nothing SSB-specific lives outside that config.
 - `src/lib/ssb/__fixtures__/` – saved real API responses used in tests
 - `src/app/` – routes and UI
 - `evals/` – eval questions and runner
