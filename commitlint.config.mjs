@@ -1,4 +1,4 @@
-export default {
+const config = {
   extends: ["@commitlint/config-conventional"],
   rules: {
     // Scope is optional (e.g. `ci: ...`), but if present it must be one of these.
@@ -9,3 +9,5 @@ export default {
     ],
   },
 };
+
+export default config;
