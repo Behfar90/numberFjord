@@ -26,13 +26,15 @@ decisions matter as much as features.
 - `pnpm dev` – local dev server
 - `pnpm lint` – ESLint
 - `pnpm typecheck` – generate Next.js types, then `tsc --noEmit`
-- `pnpm test` – Vitest (once set up)
+- `pnpm test` – Vitest (run once); `pnpm test:watch` – watch mode
 
 Run lint, type check and tests before considering a task done.
 
 ## Planned structure
 
-- `src/lib/ssb/` – typed SSB client: `searchTables`, `getTableMetadata`, `queryTable`
+- `src/lib/ssb/` – typed PxWebApi v2 client: `createPxClient(config)` returns
+  `searchTables`, `getTableMetadata`, `queryTable`; `ssb` (in `index.ts`) is the SSB
+  instance. Nothing SSB-specific lives outside that config.
 - `src/lib/ssb/__fixtures__/` – saved real API responses used in tests
 - `src/app/` – routes and UI
 - `evals/` – eval questions and runner
@@ -66,8 +68,9 @@ Run lint, type check and tests before considering a task done.
   - Breaking changes: `!` after type/scope (e.g. `feat(ssb)!: ...`)
   - Example: `feat(ssb): add queryTable with 429 retry`
 - Work on feature branches, squash-merge PRs into `main`.
-- A Husky pre-commit hook runs ESLint on staged files and `pnpm typecheck`. CI
-  (`.github/workflows/ci.yml`) runs lint and typecheck on every push and PR.
+- Husky hooks: `pre-commit` runs ESLint on staged files and `pnpm typecheck`;
+  `commit-msg` runs commitlint (`commitlint.config.mjs`) to enforce the rules above. CI
+  (`.github/workflows/ci.yml`) runs lint, typecheck and tests on every push and PR.
 - `main` ruleset (`.github/rulesets/main-protect.json`): nobody may delete or force-push
   `main`. Direct pushes are allowed while this is a solo project; add PR, required-check
   and CODEOWNERS review rules when collaborators join.
@@ -77,10 +80,11 @@ Run lint, type check and tests before considering a task done.
 
 ## Status
 
-Currently in week 1 of 8 (see plan below).
-Done: Next.js app scaffolded, shadcn initialized, repo pushed to GitHub, deployed to Vercel
-(https://number-fjord.vercel.app/), README stub.
-Next: CI (lint + typecheck), then SSB client + tests.
+Week 1 of 8 complete (see plan below).
+Done: Next.js app scaffolded, shadcn initialized, deployed to Vercel
+(https://number-fjord.vercel.app/), README stub, Husky + commitlint, CI (lint, typecheck,
+tests), `main` ruleset, SSB client (`src/lib/ssb/`) with real-response fixtures and tests.
+Next: week 2 – agent tools, agent loop, system prompt, basic chat, first eval questions.
 
 ## 8-week plan (summary)
 

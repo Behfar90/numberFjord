@@ -8,8 +8,8 @@ API (PxWebApi v2), picks the right table, queries it, and answers with interacti
 and tables. Every answer shows the agent's steps and cites the source table for every
 number, so you can check the data yourself.
 
-> **Status:** early development (week 1 of 8). The app is deployed, but the agent is not
-> built yet.
+> **Status:** early development. The typed SSB API client is built and tested; the agent
+> and chat UI come next.
 
 ## Planned features
 
@@ -27,7 +27,7 @@ Recharts · Vitest · deployed on Vercel
 
 ## Getting started
 
-Requires Node.js and [pnpm](https://pnpm.io).
+Requires Node.js 22 (see `.nvmrc`) and [pnpm](https://pnpm.io).
 
 ```bash
 pnpm install
@@ -39,8 +39,11 @@ Then open [http://localhost:3000](http://localhost:3000).
 Other commands:
 
 ```bash
-pnpm lint         # ESLint
-pnpm typecheck    # type check
+pnpm lint          # ESLint
+pnpm typecheck     # type check
+pnpm test          # unit tests (Vitest, run once)
+pnpm test:watch    # unit tests in watch mode
+pnpm fixtures:ssb  # re-record SSB API fixtures (calls the live API)
 ```
 
 ## Data and attribution
