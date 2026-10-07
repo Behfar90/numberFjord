@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { AgentUIMessage } from "@/lib/agent/agent";
 
+import { Markdown } from "./markdown";
 import { isToolPart, toolLabel } from "./tool-label";
 
 const EXAMPLES = [
@@ -56,10 +57,14 @@ export function Chat() {
           >
             {message.parts.map((part, i) => {
               if (part.type === "text") {
-                return (
+                return message.role === "user" ? (
                   <p key={i} className="whitespace-pre-wrap">
                     {part.text}
                   </p>
+                ) : (
+                  <Markdown key={i} streaming={part.state === "streaming"}>
+                    {part.text}
+                  </Markdown>
                 );
               }
               if (isToolPart(part)) {
