@@ -1,11 +1,16 @@
-import { simulateReadableStream } from "ai";
+import { APICallError, RetryError, simulateReadableStream } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import { describe, expect, it, vi } from "vitest";
 
 import { createPxClient, SSB_CONFIG } from "@/lib/ssb";
 
 import { createAgent } from "./agent";
-import { handleChat, MAX_MESSAGES } from "./chat";
+import {
+  chatErrorMessage,
+  describeError,
+  handleChat,
+  MAX_MESSAGES,
+} from "./chat";
 
 function setup() {
   const model = new MockLanguageModelV4({
@@ -85,5 +90,124 @@ describe("handleChat", () => {
 
     expect(response.status).toBe(400);
     expect(model.doStreamCalls).toHaveLength(0);
+  });
+});
+
+function apiError(statusCode: number, isRetryable?: boolean) {
+  return new APICallError({
+    message: `HTTP ${statusCode}`,
+    url: "https://ai-gateway.vercel.sh/v4/ai/language-model",
+    requestBodyValues: {},
+    statusCode,
+    isRetryable,
+    responseHeaders: { "retry-after": "60" },
+    responseBody: '{"error":{"type":"rate_limit_exceeded"}}',
+  });
+}
+
+describe("chatErrorMessage", () => {
+  it("explains rate limits from the model provider", () => {
+    expect(chatErrorMessage(apiError(429))).toMatch(/wait a minute/);
+  });
+
+  it("looks inside the error the SDK throws after its retries", () => {
+    const error = new RetryError({
+      message: "Failed after 3 attempts",
+      reason: "maxRetriesExceeded",
+      errors: [apiError(429), apiError(429), apiError(429)],
+    });
+
+    expect(chatErrorMessage(error)).toMatch(/wait a minute/);
+  });
+
+  it.each([apiError(500), new Error("boom"), "oops", null])(
+    "falls back to a generic message for %s",
+    (error) => {
+      expect(chatErrorMessage(error)).toBe(
+        "Something went wrong while answering. Please try again.",
+      );
+    },
+  );
+
+  it("is what the user sees when the model fails mid-chat", async () => {
+    const model = new MockLanguageModelV4({
+      // Not retryable, so the SDK doesn't wait between retries.
+      doStream: async () => {
+        throw apiError(429, false);
+      },
+    });
+    const agent = createAgent({
+      model,
+      client: createPxClient({ ...SSB_CONFIG, fetch: vi.fn() }),
+    });
+
+    const response = await handleChat(
+      post({ messages: [userMessage("Hello")] }),
+      agent,
+    );
+
+    expect(await response.text()).toContain("wait a minute");
+  });
+});
+
+describe("describeError", () => {
+  it("shows every attempt with its status, headers and parsed body", () => {
+    const error = new RetryError({
+      message: "Failed after 2 attempts",
+      reason: "maxRetriesExceeded",
+      errors: [apiError(429), apiError(429)],
+    });
+
+    expect(describeError(error)).toEqual({
+      name: "AI_RetryError",
+      reason: "maxRetriesExceeded",
+      attempts: Array(2).fill({
+        name: "AI_APICallError",
+        statusCode: 429,
+        isRetryable: true,
+        url: "https://ai-gateway.vercel.sh/v4/ai/language-model",
+        responseHeaders: { "retry-after": "60" },
+        responseBody: { error: { type: "rate_limit_exceeded" } },
+      }),
+    });
+  });
+
+  it("keeps a response body that is not JSON as text", () => {
+    const error = new APICallError({
+      message: "Bad gateway",
+      url: "https://example.com",
+      requestBodyValues: {},
+      statusCode: 502,
+      responseBody: "<html>Bad gateway</html>",
+    });
+
+    expect(describeError(error)).toMatchObject({
+      responseBody: "<html>Bad gateway</html>",
+    });
+  });
+
+  it("follows the cause of a gateway error to the HTTP error", () => {
+    const error = Object.assign(
+      new Error("Rate limit exceeded", { cause: apiError(429) }),
+      {
+        name: "GatewayRateLimitError",
+        statusCode: 429,
+        type: "rate_limit_exceeded",
+      },
+    );
+
+    expect(describeError(error)).toMatchObject({
+      name: "GatewayRateLimitError",
+      statusCode: 429,
+      type: "rate_limit_exceeded",
+      cause: { responseHeaders: { "retry-after": "60" } },
+    });
+  });
+
+  it("falls back to name and message for other errors", () => {
+    expect(describeError(new TypeError("nope"))).toEqual({
+      name: "TypeError",
+      message: "nope",
+    });
   });
 });
