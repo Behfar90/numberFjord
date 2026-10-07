@@ -14,7 +14,8 @@
     "fixtures:ssb": "node scripts/record-ssb-fixtures.mjs"
   },
   "dependencies": {
-    "ai": "^7.0.127",
+    "@ai-sdk/react": "^4.0.133",
+    "ai": "^7.0.130",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0",
