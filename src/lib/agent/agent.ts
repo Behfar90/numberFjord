@@ -1,4 +1,9 @@
-import { isStepCount, ToolLoopAgent, type LanguageModel } from "ai";
+import {
+  isStepCount,
+  ToolLoopAgent,
+  type InferAgentUIMessage,
+  type LanguageModel,
+} from "ai";
 
 import { ssb, type PxClient } from "@/lib/ssb";
 
@@ -26,3 +31,6 @@ export function createAgent({
     stopWhen: isStepCount(MAX_STEPS),
   });
 }
+
+export type NumberfjordAgent = ReturnType<typeof createAgent>;
+export type AgentUIMessage = InferAgentUIMessage<NumberfjordAgent>;
