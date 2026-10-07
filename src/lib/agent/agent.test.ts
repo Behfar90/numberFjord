@@ -118,6 +118,17 @@ describe("createAgent", () => {
     expect(result.text).toBe("Done.");
   });
 
+  it("sends the system prompt by default", async () => {
+    const model = new MockLanguageModelV4({ doGenerate: [text("Hi.")] });
+    const { agent } = setup(model);
+
+    await agent.generate({ prompt: "Hello" });
+
+    const [first] = model.doGenerateCalls[0].prompt;
+    expect(first.role).toBe("system");
+    expect(JSON.stringify(first.content)).toContain("Numberfjord");
+  });
+
   it(`stops after ${MAX_STEPS} steps`, async () => {
     const model = new MockLanguageModelV4({
       doGenerate: async () => toolCall("searchTables", { query: "people" }),

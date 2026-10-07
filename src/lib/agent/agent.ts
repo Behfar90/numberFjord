@@ -2,6 +2,7 @@ import { isStepCount, ToolLoopAgent, type LanguageModel } from "ai";
 
 import { ssb, type PxClient } from "@/lib/ssb";
 
+import { systemPrompt } from "./instructions";
 import { agentModel } from "./model";
 import { createPxTools } from "./tools";
 
@@ -16,7 +17,7 @@ export interface AgentOptions {
 export function createAgent({
   client = ssb,
   model = agentModel,
-  instructions,
+  instructions = systemPrompt(),
 }: AgentOptions = {}) {
   return new ToolLoopAgent({
     model,
