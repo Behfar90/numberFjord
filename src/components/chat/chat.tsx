@@ -1,14 +1,15 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 
 import { Visual } from "@/components/charts/visual";
 import { Button } from "@/components/ui/button";
 import type { AgentUIMessage } from "@/lib/agent/agent";
 
 import { Markdown } from "./markdown";
-import { isToolPart, toolLabel } from "./tool-label";
+import { isToolPart } from "./tool-label";
+import { Trace } from "./trace";
 
 const EXAMPLES = [
   "How many people live in Oslo?",
@@ -47,45 +48,41 @@ export function Chat() {
       )}
 
       <ol className="flex flex-col gap-6" aria-live="polite">
-        {messages.map((message) => (
-          <li
-            key={message.id}
-            className={
-              message.role === "user"
-                ? "bg-muted self-end rounded-lg px-3 py-2"
-                : "flex flex-col gap-2"
-            }
-          >
-            {message.parts.map((part, i) => {
-              if (part.type === "text") {
-                return message.role === "user" ? (
-                  <p key={i} className="whitespace-pre-wrap">
-                    {part.text}
-                  </p>
-                ) : (
-                  <Markdown key={i} streaming={part.state === "streaming"}>
-                    {part.text}
-                  </Markdown>
-                );
+        {messages.map((message) => {
+          const toolParts = message.parts.filter(isToolPart);
+          return (
+            <li
+              key={message.id}
+              className={
+                message.role === "user"
+                  ? "bg-muted self-end rounded-lg px-3 py-2"
+                  : "flex flex-col gap-2"
               }
-              if (isToolPart(part)) {
-                return (
-                  <Fragment key={part.toolCallId}>
-                    <p className="text-muted-foreground font-mono text-xs">
-                      {part.state === "output-error" ? "✗" : "→"}{" "}
-                      {toolLabel(part)}
+            >
+              {toolParts.length > 0 && <Trace parts={toolParts} />}
+              {message.parts.map((part, i) => {
+                if (part.type === "text") {
+                  return message.role === "user" ? (
+                    <p key={i} className="whitespace-pre-wrap">
+                      {part.text}
                     </p>
-                    {part.type === "tool-showVisual" &&
-                      part.state === "output-available" && (
-                        <Visual data={part.output} />
-                      )}
-                  </Fragment>
-                );
-              }
-              return null;
-            })}
-          </li>
-        ))}
+                  ) : (
+                    <Markdown key={i} streaming={part.state === "streaming"}>
+                      {part.text}
+                    </Markdown>
+                  );
+                }
+                if (
+                  part.type === "tool-showVisual" &&
+                  part.state === "output-available"
+                ) {
+                  return <Visual key={part.toolCallId} data={part.output} />;
+                }
+                return null;
+              })}
+            </li>
+          );
+        })}
       </ol>
 
       {status === "submitted" && (
