@@ -1,8 +1,9 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
+import { Visual } from "@/components/charts/visual";
 import { Button } from "@/components/ui/button";
 import type { AgentUIMessage } from "@/lib/agent/agent";
 
@@ -69,13 +70,16 @@ export function Chat() {
               }
               if (isToolPart(part)) {
                 return (
-                  <p
-                    key={part.toolCallId}
-                    className="text-muted-foreground font-mono text-xs"
-                  >
-                    {part.state === "output-error" ? "✗" : "→"}{" "}
-                    {toolLabel(part)}
-                  </p>
+                  <Fragment key={part.toolCallId}>
+                    <p className="text-muted-foreground font-mono text-xs">
+                      {part.state === "output-error" ? "✗" : "→"}{" "}
+                      {toolLabel(part)}
+                    </p>
+                    {part.type === "tool-showVisual" &&
+                      part.state === "output-available" && (
+                        <Visual data={part.output} />
+                      )}
+                  </Fragment>
                 );
               }
               return null;
