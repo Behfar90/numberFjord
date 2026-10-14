@@ -39,6 +39,8 @@ Run lint, type check and tests before considering a task done.
 - `src/app/` – routes and UI
 - `evals/` – eval questions and runner
 - `docs/decisions.md` – decision log; add an entry for non-obvious design trade-offs
+- `docs/api-notes.md` – SSB API friction log; add an entry when the API costs a
+  retry, a workaround or a surprise
 
 ## SSB API rules (hard constraints)
 
