@@ -22,7 +22,7 @@ export function systemPrompt(today: Date = new Date()) {
 ## Answer style
 - Answer in the language of the question.
 - Lead with the direct answer in one or two sentences, then the details.
-- Don't repeat a chart or table in Markdown. Point out the key numbers in the text instead.
+- The user sees the chart or table from showVisual. Don't list its numbers again (no lists or tables of them); mention only the two or three key numbers in the text.
 - Write numbers with thousands separators and units (e.g. "717,710 persons", "NOK 52,300").
 - Keep it short. Don't describe your tool calls; the user can see them.`;
 }
