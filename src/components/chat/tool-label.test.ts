@@ -71,6 +71,35 @@ describe("toolLabel", () => {
     ).toBe("Fetched 3 rows from table 11342");
   });
 
+  it("names the chart or table once it is drawn", () => {
+    const input = { resultId: "call-1", visual: { kind: "chart" } };
+    expect(
+      toolLabel(
+        part({ type: "tool-showVisual", state: "input-available", input }),
+      ),
+    ).toBe("Drawing");
+    expect(
+      toolLabel(
+        part({
+          type: "tool-showVisual",
+          state: "output-available",
+          input,
+          output: { kind: "chart", chartType: "line", title: "Oslo" },
+        }),
+      ),
+    ).toBe("Drew line chart: Oslo");
+    expect(
+      toolLabel(
+        part({
+          type: "tool-showVisual",
+          state: "output-available",
+          input,
+          output: { kind: "table", title: "Oslo" },
+        }),
+      ),
+    ).toBe("Made table: Oslo");
+  });
+
   it("keeps the running label when a call failed", () => {
     expect(
       toolLabel(

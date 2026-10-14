@@ -1,6 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+import { buildVisual } from "@/lib/charts/build";
+import { visualSpecSchema, type QueryResultSummary } from "@/lib/charts/schema";
 import { toRows } from "@/lib/jsonstat";
 import {
   estimateCells,
@@ -19,10 +21,17 @@ const MAX_MATCHES = 20;
 // Far below the API limit: every cell is resent to the model on each later step.
 export const MAX_QUERY_CELLS = 500;
 
+// SSB prefixes labels with the table id (docs/api-notes.md).
+export function stripTableId(label: string, tableId: string) {
+  return label.startsWith(`${tableId}: `)
+    ? label.slice(tableId.length + 2)
+    : label;
+}
+
 export function summarizeTable(table: TableSummary) {
   return {
     id: table.id,
-    title: table.label.replace(`${table.id}: `, ""),
+    title: stripTableId(table.label, table.id),
     period: `${table.firstPeriod}–${table.lastPeriod}`,
     frequency: table.timeUnit,
     updated: table.updated.slice(0, 10),
@@ -148,9 +157,12 @@ export function summarizeResult(result: QueryResult) {
   const rows = toRows(dataset);
   const fixed: Record<string, string> = {};
   const varying: string[] = [];
+  let measure: string | undefined;
   dataset.id.forEach((code, i) => {
     if (dataset.size[i] === 1) {
-      fixed[dataset.dimension[code].label] = rows[0]?.labels[code] ?? "";
+      const label = rows[0]?.labels[code] ?? "";
+      fixed[dataset.dimension[code].label] = label;
+      if (dataset.role?.metric?.includes(code)) measure = label;
     } else {
       varying.push(code);
     }
@@ -158,7 +170,8 @@ export function summarizeResult(result: QueryResult) {
 
   return {
     tableId: result.tableId,
-    title: dataset.label,
+    title: stripTableId(dataset.label, result.tableId),
+    ...(measure && { measure }),
     updated: dataset.updated.slice(0, 10),
     source: result.source,
     tableUrl: result.tableUrl,
@@ -176,6 +189,7 @@ export function summarizeResult(result: QueryResult) {
 export function createPxTools(client: PxClient) {
   const { sourceName } = client.config;
   const metadataCache = new Map<string, TableMetadata>();
+  const results = new Map<string, QueryResultSummary>();
 
   async function getMetadata(tableId: string, signal?: AbortSignal) {
     let meta = metadataCache.get(tableId);
@@ -243,14 +257,34 @@ export function createPxTools(client: PxClient) {
           }),
         ),
       }),
-      execute: async ({ tableId, selection }, { abortSignal }) => {
+      execute: async ({ tableId, selection }, { abortSignal, toolCallId }) => {
         const meta = await getMetadata(tableId, abortSignal);
         const result = await client.queryTable(
           tableId,
           buildSelection(meta, selection),
           { metadata: meta, signal: abortSignal },
         );
-        return summarizeResult(result);
+        const summary = summarizeResult(result);
+        results.set(toolCallId, summary);
+        return { resultId: toolCallId, ...summary };
+      },
+    }),
+
+    showVisual: tool({
+      description:
+        "Show a queryTable result to the user as a chart or table, with its source. Refer to the result by its resultId; the numbers are filled in from the result, so never pass values.",
+      inputSchema: z.object({
+        resultId: z.string().describe("resultId from a queryTable call"),
+        visual: visualSpecSchema,
+      }),
+      execute: async ({ resultId, visual }) => {
+        const result = results.get(resultId);
+        if (!result) {
+          throw new Error(
+            `No result "${resultId}" in this answer. Results only last for one answer: call queryTable again and use its resultId.`,
+          );
+        }
+        return buildVisual(visual, result);
       },
     }),
   };
