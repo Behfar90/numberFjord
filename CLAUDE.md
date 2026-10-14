@@ -38,6 +38,7 @@ Run lint, type check and tests before considering a task done.
 - `src/lib/ssb/__fixtures__/` – saved real API responses used in tests
 - `src/app/` – routes and UI
 - `evals/` – eval questions and runner
+- `docs/decisions.md` – decision log; add an entry for non-obvious design trade-offs
 
 ## SSB API rules (hard constraints)
 
