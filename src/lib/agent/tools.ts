@@ -1,6 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+import { buildVisual } from "@/lib/charts/build";
+import { visualSpecSchema, type QueryResultSummary } from "@/lib/charts/schema";
 import { toRows } from "@/lib/jsonstat";
 import {
   estimateCells,
@@ -176,6 +178,7 @@ export function summarizeResult(result: QueryResult) {
 export function createPxTools(client: PxClient) {
   const { sourceName } = client.config;
   const metadataCache = new Map<string, TableMetadata>();
+  const results = new Map<string, QueryResultSummary>();
 
   async function getMetadata(tableId: string, signal?: AbortSignal) {
     let meta = metadataCache.get(tableId);
@@ -243,14 +246,34 @@ export function createPxTools(client: PxClient) {
           }),
         ),
       }),
-      execute: async ({ tableId, selection }, { abortSignal }) => {
+      execute: async ({ tableId, selection }, { abortSignal, toolCallId }) => {
         const meta = await getMetadata(tableId, abortSignal);
         const result = await client.queryTable(
           tableId,
           buildSelection(meta, selection),
           { metadata: meta, signal: abortSignal },
         );
-        return summarizeResult(result);
+        const summary = summarizeResult(result);
+        results.set(toolCallId, summary);
+        return { resultId: toolCallId, ...summary };
+      },
+    }),
+
+    showVisual: tool({
+      description:
+        "Show a queryTable result to the user as a chart or table, with its source. Refer to the result by its resultId; the numbers are filled in from the result, so never pass values.",
+      inputSchema: z.object({
+        resultId: z.string().describe("resultId from a queryTable call"),
+        visual: visualSpecSchema,
+      }),
+      execute: async ({ resultId, visual }) => {
+        const result = results.get(resultId);
+        if (!result) {
+          throw new Error(
+            `No result "${resultId}" in this answer. Results only last for one answer: call queryTable again and use its resultId.`,
+          );
+        }
+        return buildVisual(visual, result);
       },
     }),
   };

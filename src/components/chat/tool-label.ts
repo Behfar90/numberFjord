@@ -3,14 +3,21 @@ import type { AgentUIMessage } from "@/lib/agent/agent";
 type Part = AgentUIMessage["parts"][number];
 export type ToolPart = Extract<
   Part,
-  { type: "tool-searchTables" | "tool-getTableMetadata" | "tool-queryTable" }
+  {
+    type:
+      | "tool-searchTables"
+      | "tool-getTableMetadata"
+      | "tool-queryTable"
+      | "tool-showVisual";
+  }
 >;
 
 export function isToolPart(part: Part): part is ToolPart {
   return (
     part.type === "tool-searchTables" ||
     part.type === "tool-getTableMetadata" ||
-    part.type === "tool-queryTable"
+    part.type === "tool-queryTable" ||
+    part.type === "tool-showVisual"
   );
 }
 
@@ -35,6 +42,13 @@ export function toolLabel(part: ToolPart): string {
       return part.state === "output-available"
         ? `Fetched ${part.output.rows.length} rows from table ${id}`
         : `Querying table ${id ?? ""}`.trim();
+    }
+    case "tool-showVisual": {
+      if (part.state !== "output-available") return "Drawing";
+      const { output } = part;
+      return output.kind === "chart"
+        ? `Drew ${output.chartType} chart: ${output.title}`
+        : `Made table: ${output.title}`;
     }
   }
 }

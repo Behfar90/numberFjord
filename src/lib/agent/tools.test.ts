@@ -210,3 +210,58 @@ describe("queryTable tool", () => {
     expect(paths.some((p) => p.endsWith("/data"))).toBe(false);
   });
 });
+
+describe("showVisual tool", () => {
+  const query = {
+    tableId: "07459",
+    selection: [
+      { dimension: "Region", values: ["0301"] },
+      { dimension: "Tid", latest: 2 },
+    ],
+  };
+
+  it("builds a visual from a stored query result, with its source", async () => {
+    const { tools } = setup();
+    const { resultId, rows } = await run(tools.queryTable, query);
+    const visual = await run(tools.showVisual, {
+      resultId,
+      visual: { kind: "table", title: "Population of Oslo" },
+    });
+
+    expect(resultId).toBe("call-1");
+    expect(visual).toMatchObject({
+      kind: "table",
+      title: "Population of Oslo",
+      columns: ["sex", "age", "year", "value"],
+      source: {
+        tableId: "07459",
+        tableUrl: "https://www.ssb.no/en/statbank/table/07459",
+        license: "CC BY 4.0",
+      },
+    });
+    expect(visual.kind === "table" && visual.rows).toEqual(rows);
+  });
+
+  it("passes chart errors on to the model", async () => {
+    const { tools } = setup();
+    const { resultId } = await run(tools.queryTable, query);
+
+    await expect(
+      run(tools.showVisual, {
+        resultId,
+        visual: { kind: "chart", chartType: "line", title: "Oslo", x: "year" },
+      }),
+    ).rejects.toThrow(/also vary/);
+  });
+
+  it("rejects a resultId that is not from this answer", async () => {
+    const { tools } = setup();
+
+    await expect(
+      run(tools.showVisual, {
+        resultId: "call-old",
+        visual: { kind: "table", title: "Oslo" },
+      }),
+    ).rejects.toThrow(/call queryTable again/);
+  });
+});
