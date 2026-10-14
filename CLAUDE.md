@@ -36,6 +36,9 @@ Run lint, type check and tests before considering a task done.
   `searchTables`, `getTableMetadata`, `queryTable`; `ssb` (in `index.ts`) is the SSB
   instance. Nothing SSB-specific lives outside that config.
 - `src/lib/ssb/__fixtures__/` – saved real API responses used in tests
+- `src/lib/agent/` – tools, agent loop, system prompt, chat route handler
+- `src/lib/charts/` – visual specs and the query-result → chart/table builder
+- `src/components/charts/`, `src/components/chat/` – visuals, trace, chat UI
 - `src/app/` – routes and UI
 - `evals/` – eval questions and runner
 - `docs/decisions.md` – decision log; add an entry for non-obvious design trade-offs
@@ -47,7 +50,8 @@ Run lint, type check and tests before considering a task done.
 - Base: `https://data.ssb.no/api/pxwebapi/v2/`. No API key needed.
 - Limits: 30 requests/minute, 800,000 cells per query. Run calls sequentially and keep
   queries small.
-- Handle 429 (too many requests) and 403 (dataset too large) explicitly.
+- Handle 429 (too many requests) and 400 "Too many cells selected" (query too large)
+  explicitly. The API returns 400 here, not 403 (see `docs/api-notes.md`).
 - Responses are JSON-stat2 (dimensions, categories, values).
 - New statistics publish at 08:00. Metadata updates at 05:00 and 11:30 can briefly make
   tables unavailable – show a friendly error, don't crash.
@@ -83,7 +87,7 @@ Run lint, type check and tests before considering a task done.
 
 ## Status
 
-Week 2 of 8 complete (see plan below).
+Week 3 of 8 complete (see plan below).
 Done: Next.js app scaffolded, shadcn initialized, deployed to Vercel
 (https://number-fjord.vercel.app/), README stub, Husky + commitlint, CI (lint, typecheck,
 tests), `main` ruleset, SSB client (`src/lib/ssb/`) with real-response fixtures and tests.
@@ -91,7 +95,12 @@ Week 2: SSB tools with JSON-stat → rows (`src/lib/agent/`), tool loop agent wi
 limit, system prompt with sourcing rules, streaming chat route (`src/app/api/chat/`),
 chat page with tool call lines and markdown answers (ssb.no links only), 10 eval
 questions with schema (`evals/questions.ts`).
-Next: week 3 – chart/table schemas, Recharts components, agent trace, source lines.
+Week 3: chart/table specs where the model names columns and the server fills in values
+from stored query results (`src/lib/charts/`, `showVisual` tool), Recharts chart and
+table components with a validated colorblind-safe palette (`src/components/charts/`),
+collapsible agent trace with raw API links, source lines on every visual plus a
+per-answer source footer, decision log and API notes (`docs/`).
+Next: week 4 – caching, rate limiting, error states, disclaimers, privacy page.
 
 ## 8-week plan (summary)
 
