@@ -12,6 +12,7 @@ import {
 
 export function toSource(result: QueryResultSummary): Source {
   return {
+    name: result.source,
     tableId: result.tableId,
     tableTitle: result.title,
     tableUrl: result.tableUrl,
@@ -63,7 +64,10 @@ function buildChart(spec: ChartSpec, result: QueryResultSummary): ChartData {
   const points = new Map<string, ChartPoint>();
 
   for (const row of result.rows) {
-    const label = seriesIndex === -1 ? "value" : String(row[seriesIndex]);
+    const label =
+      seriesIndex === -1
+        ? (result.measure ?? "Value")
+        : String(row[seriesIndex]);
     let key = seriesKeys.get(label);
     if (key === undefined) {
       // Labels can contain dots, which chart libraries read as nested paths.

@@ -27,3 +27,20 @@ server would draw made-up numbers under a real source line.
 
 **Revisit** in week 7 (follow-ups). A server-side store keyed by conversation (e.g.
 Redis from week 4) would keep the guarantee and avoid the extra query.
+
+## 2. Sources come from query results; only text can contain transformed numbers
+
+_October 2026, week 3_
+
+**Context.** CC BY 4.0 requires attribution and a note when data was changed. The model
+is told to cite its tables, but a prompt is not a guarantee.
+
+**Decision.** Every chart and table carries its own source line, and every answer ends
+with a sources footer built from its `queryTable` results (`answerSources`), so the
+attribution is there even if the model forgets it. Charts and tables only ever show
+values exactly as SSB returned them, so they need no "transformed" note. Calculations
+(changes, percentages, sums) only appear in the answer text, where the system prompt
+requires the model to say it calculated them and show how.
+
+**Revisit** if a chart ever shows derived values (e.g. percentage change or an index):
+add a `transformation` note to `ChartData` and show it in the source line.

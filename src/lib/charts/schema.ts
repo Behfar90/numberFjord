@@ -34,6 +34,8 @@ export type ChartSpec = Extract<VisualSpec, { kind: "chart" }>;
 export interface QueryResultSummary {
   tableId: string;
   title: string;
+  source: string;
+  measure?: string;
   updated: string;
   tableUrl: string;
   fixed: Record<string, string>;
@@ -42,6 +44,7 @@ export interface QueryResultSummary {
 }
 
 export interface Source {
+  name: string;
   tableId: string;
   tableTitle: string;
   tableUrl: string;

@@ -176,6 +176,8 @@ describe("queryTable tool", () => {
 
     expect(result).toMatchObject({
       tableId: "07459",
+      title: "Population, by region, sex, age and year",
+      measure: "Persons",
       tableUrl: "https://www.ssb.no/en/statbank/table/07459",
       fixed: { region: "Oslo - Oslove", contents: "Persons" },
       columns: ["sex", "age", "year", "value"],

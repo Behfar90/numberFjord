@@ -3,11 +3,13 @@
 import { useChat } from "@ai-sdk/react";
 import { useState } from "react";
 
+import { SourceLine } from "@/components/charts/source-line";
 import { Visual } from "@/components/charts/visual";
 import { Button } from "@/components/ui/button";
 import type { AgentUIMessage } from "@/lib/agent/agent";
 
 import { Markdown } from "./markdown";
+import { answerSources } from "./answer-sources";
 import { isToolPart } from "./tool-label";
 import { Trace } from "./trace";
 
@@ -50,6 +52,7 @@ export function Chat() {
       <ol className="flex flex-col gap-6" aria-live="polite">
         {messages.map((message) => {
           const toolParts = message.parts.filter(isToolPart);
+          const sources = answerSources(toolParts);
           return (
             <li
               key={message.id}
@@ -80,6 +83,16 @@ export function Chat() {
                 }
                 return null;
               })}
+              {sources.length > 0 && (
+                <footer className="text-muted-foreground flex flex-col gap-1 border-t pt-2 text-xs">
+                  <p className="font-medium">
+                    {sources.length === 1 ? "Source" : "Sources"}
+                  </p>
+                  {sources.map((source) => (
+                    <SourceLine key={source.tableId} source={source} />
+                  ))}
+                </footer>
+              )}
             </li>
           );
         })}

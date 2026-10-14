@@ -26,8 +26,8 @@ Labels come as `"05212: Population in densely and sparsely populated areas…"`,
 search results and the JSON-stat dataset `label`. Every client that shows a title has
 to strip the prefix.
 
-**Workaround:** `summarizeTable` strips it from search results; data responses still
-carry it (to fix in the source line).
+**Workaround:** `stripTableId` in `src/lib/agent/tools.ts` removes it from search
+results and data responses.
 
 ## Large dimensions come back in full
 

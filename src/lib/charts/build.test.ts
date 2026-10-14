@@ -10,6 +10,7 @@ import {
 const result: QueryResultSummary = {
   tableId: "07459",
   title: "Population, by region, sex, age, contents and year",
+  source: "Statistics Norway",
   updated: "2026-02-19",
   tableUrl: "https://www.ssb.no/en/statbank/table/07459",
   fixed: { region: "Oslo - Oslove", contents: "Persons" },
@@ -23,6 +24,7 @@ const result: QueryResultSummary = {
 };
 
 const source = {
+  name: "Statistics Norway",
   tableId: "07459",
   tableTitle: "Population, by region, sex, age, contents and year",
   tableUrl: "https://www.ssb.no/en/statbank/table/07459",
@@ -96,9 +98,25 @@ describe("buildVisual", () => {
     );
 
     expect(chart).toMatchObject({
-      series: [{ key: "s0", label: "value" }],
+      series: [{ key: "s0", label: "Value" }],
       points: [{ x: "2025", s0: 717710 }],
     });
+  });
+
+  it("names a single series after the measure when the result has one", () => {
+    const chart = buildVisual(
+      { kind: "chart", chartType: "bar", title: "Oslo", x: "year" },
+      {
+        ...result,
+        measure: "Persons",
+        columns: ["year", "value"],
+        rows: [["2025", 717710]],
+      },
+    );
+
+    expect(chart.kind === "chart" && chart.series).toEqual([
+      { key: "s0", label: "Persons" },
+    ]);
   });
 
   it("passes rows through for a table", () => {

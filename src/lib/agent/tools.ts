@@ -21,10 +21,17 @@ const MAX_MATCHES = 20;
 // Far below the API limit: every cell is resent to the model on each later step.
 export const MAX_QUERY_CELLS = 500;
 
+// SSB prefixes labels with the table id (docs/api-notes.md).
+export function stripTableId(label: string, tableId: string) {
+  return label.startsWith(`${tableId}: `)
+    ? label.slice(tableId.length + 2)
+    : label;
+}
+
 export function summarizeTable(table: TableSummary) {
   return {
     id: table.id,
-    title: table.label.replace(`${table.id}: `, ""),
+    title: stripTableId(table.label, table.id),
     period: `${table.firstPeriod}–${table.lastPeriod}`,
     frequency: table.timeUnit,
     updated: table.updated.slice(0, 10),
@@ -150,9 +157,12 @@ export function summarizeResult(result: QueryResult) {
   const rows = toRows(dataset);
   const fixed: Record<string, string> = {};
   const varying: string[] = [];
+  let measure: string | undefined;
   dataset.id.forEach((code, i) => {
     if (dataset.size[i] === 1) {
-      fixed[dataset.dimension[code].label] = rows[0]?.labels[code] ?? "";
+      const label = rows[0]?.labels[code] ?? "";
+      fixed[dataset.dimension[code].label] = label;
+      if (dataset.role?.metric?.includes(code)) measure = label;
     } else {
       varying.push(code);
     }
@@ -160,7 +170,8 @@ export function summarizeResult(result: QueryResult) {
 
   return {
     tableId: result.tableId,
-    title: dataset.label,
+    title: stripTableId(dataset.label, result.tableId),
+    ...(measure && { measure }),
     updated: dataset.updated.slice(0, 10),
     source: result.source,
     tableUrl: result.tableUrl,

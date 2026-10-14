@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { VisualData } from "@/lib/charts/schema";
 
+import { SourceLine } from "./source-line";
 import { VisualChart } from "./visual-chart";
 import { chartToTable, describeFixed } from "./visual-data";
 import { VisualTable } from "./visual-table";
@@ -12,7 +13,6 @@ import { VisualTable } from "./visual-table";
 export function Visual({ data }: { data: VisualData }) {
   const [showTable, setShowTable] = useState(false);
   const fixed = describeFixed(data.fixed);
-  const { source } = data;
 
   return (
     <figure className="flex flex-col gap-3 rounded-lg border p-4">
@@ -30,18 +30,7 @@ export function Visual({ data }: { data: VisualData }) {
       )}
 
       <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
-        <p>
-          Source: Statistics Norway,{" "}
-          <a
-            href={source.tableUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-2"
-          >
-            table {source.tableId}
-          </a>{" "}
-          · {source.license}
-        </p>
+        <SourceLine source={data.source} />
         {data.kind === "chart" && (
           <Button
             variant="ghost"

@@ -24,6 +24,7 @@ const chart: ChartData = {
   ],
   fixed: { region: "Oslo - Oslove", contents: "Persons" },
   source: {
+    name: "Statistics Norway",
     tableId: "07459",
     tableTitle: "Population",
     tableUrl: "https://www.ssb.no/en/statbank/table/07459",
