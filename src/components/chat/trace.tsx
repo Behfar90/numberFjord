@@ -39,7 +39,7 @@ function TraceStep({ part }: { part: ToolPart }) {
           {toolLabel(part)}
         </p>
         {lines.length > 0 && (
-          <ul className="flex flex-col gap-0.5 break-words">
+          <ul className="flex flex-col gap-0.5 wrap-break-word">
             {lines.map((line, i) => (
               <li key={i}>{line}</li>
             ))}
