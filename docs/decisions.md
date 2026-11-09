@@ -72,3 +72,25 @@ that says they're current.
 **Rejected: Next.js fetch caching.** It ties the client to Next.js and can't express
 "until the next publish time" without the same logic, and the client is meant to run in
 the eval runner too.
+
+## 4. Chat is rate limited per hashed IP and fails open
+
+_November 2026, week 4_
+
+**Context.** The app has no accounts, every question costs model tokens and several SSB
+requests, and SSB allows 30 requests per minute for the whole deployment.
+
+**Decision.** `/api/chat` checks two Upstash sliding windows per client IP before doing
+any work: 5 questions per minute against bursts and 50 per day against spend
+(`src/lib/agent/rate-limit.ts`). A blocked request gets a 429 with `Retry-After` and a
+message saying how long to wait. Redis keys use a truncated SHA-256 of the IP, so no raw
+IP addresses are stored. If Redis is down or slow the request is allowed.
+
+**Trade-off.** Failing open means an outage of Redis removes the limit, but the
+alternative is a chat that is down whenever Redis is. People behind one shared IP
+(offices, universities, mobile carriers) share one allowance. An unsalted hash of an IPv4
+address can be reversed by brute force, so it hides IPs from casual inspection, not from
+someone with Redis access who is determined to recover them.
+
+**Rejected: limiting by cookie or session.** Clearing cookies resets it, so it limits
+nobody who wants to get around it.

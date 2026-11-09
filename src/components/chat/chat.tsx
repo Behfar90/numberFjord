@@ -10,6 +10,7 @@ import type { AgentUIMessage } from "@/lib/agent/agent";
 
 import { Markdown } from "./markdown";
 import { answerSources } from "./answer-sources";
+import { errorMessage } from "./error-message";
 import { isToolPart } from "./tool-label";
 import { Trace } from "./trace";
 
@@ -107,7 +108,7 @@ export function Chat() {
           role="alert"
           className="border-destructive/40 flex items-center justify-between gap-4 rounded-lg border px-3 py-2 text-sm"
         >
-          <span>{error.message}</span>
+          <span>{errorMessage(error)}</span>
           <Button variant="outline" size="sm" onClick={() => regenerate()}>
             Retry
           </Button>
