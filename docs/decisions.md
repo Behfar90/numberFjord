@@ -44,3 +44,31 @@ requires the model to say it calculated them and show how.
 
 **Revisit** if a chart ever shows derived values (e.g. percentage change or an index):
 add a `transformation` note to `ChartData` and show it in the source line.
+
+## 3. SSB responses are cached until the next publish time, not for a fixed TTL
+
+_November 2026, week 4_
+
+**Context.** SSB allows 30 requests per minute, and one answer can take several calls
+(search, metadata, query). Popular questions repeat the same requests. SSB changes data
+at fixed times: new statistics at 08:00 and metadata updates at 05:00 and 11:30, Oslo
+time.
+
+**Decision.** `ssbFetch` caches each successful response in Upstash Redis, keyed by the
+full request URL, until the next of those times (`secondsUntilNextRefresh` in
+`src/lib/ssb/cache.ts`). The times live in `SSB_CONFIG`, so the generic client stays
+source-agnostic. Errors are never cached, cached values are validated against the schema
+again on read, and a failing cache counts as a miss, so Redis can never break an answer.
+Without Redis credentials (tests, CI, local runs) the client runs uncached.
+
+**Trade-off.** Search results and metadata that don't change at a refresh time still
+expire, so the first request after each refresh goes to SSB. Three refreshes a day make
+this cheap. A table published outside the schedule would be stale until the next refresh.
+
+**Rejected: a fixed TTL.** A short TTL wastes requests on data that only changes at
+08:00. A long one serves yesterday's figures right after a release, under a source line
+that says they're current.
+
+**Rejected: Next.js fetch caching.** It ties the client to Next.js and can't express
+"until the next publish time" without the same logic, and the client is meant to run in
+the eval runner too.
