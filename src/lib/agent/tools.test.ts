@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createPxClient, SSB_CONFIG, type TableMetadata } from "@/lib/ssb";
 import data from "@/lib/ssb/__fixtures__/data-07459-oslo.json";
+import error404 from "@/lib/ssb/__fixtures__/error-404.json";
 import metadata from "@/lib/ssb/__fixtures__/metadata-07459.json";
 import search from "@/lib/ssb/__fixtures__/search-population.json";
 
@@ -265,5 +266,30 @@ describe("showVisual tool", () => {
         visual: { kind: "table", title: "Oslo" },
       }),
     ).rejects.toThrow(/call queryTable again/);
+  });
+});
+
+describe("SSB errors in tools", () => {
+  function failingTools(status: number, body: unknown) {
+    const fetch = vi.fn<typeof globalThis.fetch>(
+      async () => new Response(JSON.stringify(body), { status }),
+    );
+    return createPxTools(createPxClient({ ...SSB_CONFIG, fetch }));
+  }
+
+  it("tells the model to stop when SSB is down", async () => {
+    const tools = failingTools(503, { title: "Service Unavailable" });
+
+    await expect(
+      run(tools.searchTables, { query: "population" }),
+    ).rejects.toThrow(/Do not retry/);
+  });
+
+  it("tells the model to search again for an unknown table", async () => {
+    const tools = failingTools(error404.status, error404.body);
+
+    await expect(
+      run(tools.getTableMetadata, { tableId: "99999" }),
+    ).rejects.toThrow(/search again/);
   });
 });
