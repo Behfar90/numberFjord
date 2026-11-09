@@ -18,6 +18,7 @@ export function toSource(result: QueryResultSummary): Source {
     tableUrl: result.tableUrl,
     updated: result.updated,
     license: "CC BY 4.0",
+    ...(result.staleSince && { staleSince: result.staleSince }),
   };
 }
 

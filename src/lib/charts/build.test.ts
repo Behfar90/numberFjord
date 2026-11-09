@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildVisual } from "./build";
+import { buildVisual, toSource } from "./build";
 import {
   MAX_SERIES,
   visualSpecSchema,
@@ -187,5 +187,19 @@ describe("buildVisual", () => {
     expect(() =>
       buildVisual({ kind: "table", title: "Oslo" }, { ...result, rows: [] }),
     ).toThrow(/no rows/);
+  });
+});
+
+describe("toSource", () => {
+  it("has no staleSince for live data", () => {
+    expect(toSource(result)).toEqual(source);
+  });
+
+  it("carries staleSince when a cached copy was used", () => {
+    const staleSince = "2026-11-09T10:07:00.000Z";
+    expect(toSource({ ...result, staleSince })).toEqual({
+      ...source,
+      staleSince,
+    });
   });
 });

@@ -179,6 +179,10 @@ export function summarizeResult(result: QueryResult) {
     tableUrl: result.tableUrl,
     sourceUrl: result.sourceUrl,
     ...(dataset.note && { notes: dataset.note }),
+    ...(result.staleSince && {
+      staleSince: result.staleSince,
+      staleNote: `${result.source} could not be reached, so this is a cached copy fetched at ${result.staleSince}. Tell the user, and that it may miss a newer release.`,
+    }),
     fixed,
     columns: [...varying.map((code) => dataset.dimension[code].label), "value"],
     rows: rows.map((row) => [

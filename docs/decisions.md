@@ -65,6 +65,11 @@ Without Redis credentials (tests, CI, local runs) the client runs uncached.
 expire, so the first request after each refresh goes to SSB. Three refreshes a day make
 this cheap. A table published outside the schedule would be stale until the next refresh.
 
+**Outage fallback.** Entries stay in Redis for 7 days after they go stale. If SSB is down
+or still rate limiting after retries, the last copy is served with `staleSince` set. The
+model is told to mention it, and every source line says "cached copy from …". A 404 or
+invalid query never falls back, because those would fail the same way again.
+
 **Rejected: a fixed TTL.** A short TTL wastes requests on data that only changes at
 08:00. A long one serves yesterday's figures right after a release, under a source line
 that says they're current.

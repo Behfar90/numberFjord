@@ -8,6 +8,14 @@ export interface ResponseCache {
   // Local "HH:MM" times when the source may publish new data or metadata.
   refreshTimes: string[];
   timeZone: string;
+  // How long an expired entry is kept as a fallback for when the source is down.
+  staleSeconds?: number;
+}
+
+export interface CacheEntry<T> {
+  data: T;
+  storedAt: number;
+  freshUntil: number;
 }
 
 export function createMemoryStore(): CacheStore {

@@ -17,6 +17,7 @@ export const SSB_CONFIG: PxConfig = {
     store: cacheStore,
     refreshTimes: ["05:00", "08:00", "11:30"],
     timeZone: "Europe/Oslo",
+    staleSeconds: 7 * 24 * 3_600,
   },
 };
 

@@ -12,6 +12,7 @@ import {
   createPxTools,
   MAX_QUERY_CELLS,
   summarizeMetadata,
+  summarizeResult,
 } from "./tools";
 
 function routedFetch() {
@@ -291,5 +292,30 @@ describe("SSB errors in tools", () => {
     await expect(
       run(tools.getTableMetadata, { tableId: "99999" }),
     ).rejects.toThrow(/search again/);
+  });
+});
+
+describe("summarizeResult", () => {
+  const live = {
+    tableId: "07459",
+    dataset: data as unknown as Parameters<
+      typeof summarizeResult
+    >[0]["dataset"],
+    source: "Statistics Norway",
+    sourceUrl: "https://data.ssb.no/api/pxwebapi/v2/tables/07459/data",
+    tableUrl: "https://www.ssb.no/en/statbank/table/07459",
+  };
+
+  it("adds no stale fields for live data", () => {
+    expect(summarizeResult(live)).not.toHaveProperty("staleNote");
+  });
+
+  it("tells the model when the data is a cached copy", () => {
+    const summary = summarizeResult({
+      ...live,
+      staleSince: "2026-11-09T10:07:00.000Z",
+    });
+    expect(summary.staleSince).toBe("2026-11-09T10:07:00.000Z");
+    expect(summary.staleNote).toMatch(/cached copy.*Tell the user/);
   });
 });

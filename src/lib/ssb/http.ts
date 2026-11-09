@@ -1,7 +1,16 @@
-import type { z } from "zod";
+import { z } from "zod";
 
-import { secondsUntilNextRefresh, type ResponseCache } from "./cache";
-import { SsbError, SsbUnavailableError, toSsbError } from "./errors";
+import {
+  secondsUntilNextRefresh,
+  type CacheEntry,
+  type ResponseCache,
+} from "./cache";
+import {
+  SsbError,
+  SsbRateLimitError,
+  SsbUnavailableError,
+  toSsbError,
+} from "./errors";
 
 export interface HttpConfig {
   baseUrl: string;
@@ -20,6 +29,8 @@ export interface RequestOptions {
 export interface SsbResponse<T> {
   data: T;
   url: string;
+  // Set when the source was down and an expired cached copy was served.
+  staleSince?: string;
 }
 
 const DEFAULT_MAX_ATTEMPTS = 3;
@@ -73,48 +84,67 @@ export async function ssbFetch<T>(
     cache,
   } = config;
   const url = buildUrl(baseUrl, path, params, lang).toString();
+  if (!cache) return { data: await fetchLive(), url };
 
-  if (cache) {
-    const cached = await readCache(cache, url, schema);
-    if (cached !== undefined) return { data: cached, url };
+  const cached = await readCache(cache, url, schema);
+  if (cached && Date.now() < cached.freshUntil) {
+    return { data: cached.data, url };
+  }
+  try {
+    const data = await fetchLive();
+    await writeCache(cache, url, data);
+    return { data, url };
+  } catch (err) {
+    // Only outages fall back: a 404 or bad query would fail the same way again.
+    const outage =
+      err instanceof SsbRateLimitError || err instanceof SsbUnavailableError;
+    if (outage && cached) {
+      return {
+        data: cached.data,
+        url,
+        staleSince: new Date(cached.storedAt).toISOString(),
+      };
+    }
+    throw err;
   }
 
-  for (let attempt = 1; ; attempt++) {
-    let res: Response;
-    try {
-      res = await fetchFn(url, {
-        headers: { Accept: "application/json" },
-        signal,
-      });
-    } catch (err) {
-      if (signal?.aborted) throw err;
-      throw new SsbUnavailableError(
-        sourceName,
-        `Network error calling ${url}`,
-        undefined,
-        { cause: err },
-      );
-    }
+  async function fetchLive(): Promise<T> {
+    for (let attempt = 1; ; attempt++) {
+      let res: Response;
+      try {
+        res = await fetchFn(url, {
+          headers: { Accept: "application/json" },
+          signal,
+        });
+      } catch (err) {
+        if (signal?.aborted) throw err;
+        throw new SsbUnavailableError(
+          sourceName,
+          `Network error calling ${url}`,
+          undefined,
+          { cause: err },
+        );
+      }
 
-    if (res.status === 429 && attempt < maxAttempts) {
-      await sleep(retryDelayMs(res.headers.get("Retry-After"), attempt));
-      continue;
-    }
+      if (res.status === 429 && attempt < maxAttempts) {
+        await sleep(retryDelayMs(res.headers.get("Retry-After"), attempt));
+        continue;
+      }
 
-    const body: unknown = await res.json().catch(() => undefined);
-    if (!res.ok) throw toSsbError(sourceName, res.status, body);
+      const body: unknown = await res.json().catch(() => undefined);
+      if (!res.ok) throw toSsbError(sourceName, res.status, body);
 
-    const parsed = schema.safeParse(body);
-    if (!parsed.success) {
-      throw new SsbError(
-        `Unexpected response shape from ${url}: ${parsed.error.message}`,
-        `${sourceName} returned data in an unexpected format.`,
-        res.status,
-        { cause: parsed.error },
-      );
+      const parsed = schema.safeParse(body);
+      if (!parsed.success) {
+        throw new SsbError(
+          `Unexpected response shape from ${url}: ${parsed.error.message}`,
+          `${sourceName} returned data in an unexpected format.`,
+          res.status,
+          { cause: parsed.error },
+        );
+      }
+      return parsed.data;
     }
-    if (cache) await writeCache(cache, url, parsed.data);
-    return { data: parsed.data, url };
   }
 }
 
@@ -123,30 +153,39 @@ async function readCache<T>(
   cache: ResponseCache,
   key: string,
   schema: z.ZodType<T>,
-): Promise<T | undefined> {
+): Promise<CacheEntry<T> | undefined> {
   try {
     const value = await cache.store.get(key);
     if (value === undefined || value === null) return undefined;
-    const parsed = schema.safeParse(value);
+    const parsed = cacheEntrySchema(schema).safeParse(value);
     return parsed.success ? parsed.data : undefined;
   } catch {
     return undefined;
   }
 }
 
-async function writeCache(
+async function writeCache<T>(
   cache: ResponseCache,
   key: string,
-  value: unknown,
+  data: T,
 ): Promise<void> {
   try {
-    const ttl = secondsUntilNextRefresh(
-      new Date(),
+    const now = Date.now();
+    const fresh = secondsUntilNextRefresh(
+      new Date(now),
       cache.refreshTimes,
       cache.timeZone,
     );
-    await cache.store.set(key, value, ttl);
+    const entry: CacheEntry<T> = {
+      data,
+      storedAt: now,
+      freshUntil: now + fresh * 1_000,
+    };
+    await cache.store.set(key, entry, fresh + (cache.staleSeconds ?? 0));
   } catch {
     // Same as reads: losing a cache write only costs a future API call.
   }
 }
+
+const cacheEntrySchema = <T>(data: z.ZodType<T>) =>
+  z.object({ data, storedAt: z.number(), freshUntil: z.number() });
