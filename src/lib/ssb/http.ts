@@ -1,5 +1,6 @@
 import type { z } from "zod";
 
+import { secondsUntilNextRefresh, type ResponseCache } from "./cache";
 import { SsbError, SsbUnavailableError, toSsbError } from "./errors";
 
 export interface HttpConfig {
@@ -9,6 +10,7 @@ export interface HttpConfig {
   maxAttempts?: number;
   fetch?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
+  cache?: ResponseCache;
 }
 
 export interface RequestOptions {
@@ -68,8 +70,14 @@ export async function ssbFetch<T>(
     maxAttempts = DEFAULT_MAX_ATTEMPTS,
     fetch: fetchFn = fetch,
     sleep = defaultSleep,
+    cache,
   } = config;
   const url = buildUrl(baseUrl, path, params, lang).toString();
+
+  if (cache) {
+    const cached = await readCache(cache, url, schema);
+    if (cached !== undefined) return { data: cached, url };
+  }
 
   for (let attempt = 1; ; attempt++) {
     let res: Response;
@@ -105,6 +113,40 @@ export async function ssbFetch<T>(
         { cause: parsed.error },
       );
     }
+    if (cache) await writeCache(cache, url, parsed.data);
     return { data: parsed.data, url };
+  }
+}
+
+// A broken or unreachable cache must never fail a request: treat it as a miss.
+async function readCache<T>(
+  cache: ResponseCache,
+  key: string,
+  schema: z.ZodType<T>,
+): Promise<T | undefined> {
+  try {
+    const value = await cache.store.get(key);
+    if (value === undefined || value === null) return undefined;
+    const parsed = schema.safeParse(value);
+    return parsed.success ? parsed.data : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function writeCache(
+  cache: ResponseCache,
+  key: string,
+  value: unknown,
+): Promise<void> {
+  try {
+    const ttl = secondsUntilNextRefresh(
+      new Date(),
+      cache.refreshTimes,
+      cache.timeZone,
+    );
+    await cache.store.set(key, value, ttl);
+  } catch {
+    // Same as reads: losing a cache write only costs a future API call.
   }
 }

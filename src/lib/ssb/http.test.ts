@@ -8,6 +8,11 @@ import {
   SsbRateLimitError,
   SsbUnavailableError,
 } from "./errors";
+import {
+  createMemoryStore,
+  type CacheStore,
+  type ResponseCache,
+} from "./cache";
 import { buildUrl, retryDelayMs, ssbFetch, type HttpConfig } from "./http";
 import { tableSearchResponseSchema } from "./schemas";
 
@@ -42,7 +47,7 @@ const CONFIG: HttpConfig = {
 };
 
 const searchPopulation = (
-  deps: Pick<HttpConfig, "fetch" | "sleep">,
+  deps: Pick<HttpConfig, "fetch" | "sleep" | "cache">,
   signal?: AbortSignal,
 ) =>
   ssbFetch(
@@ -162,5 +167,95 @@ describe("ssbFetch", () => {
 
     expect(err).toBeInstanceOf(SsbError);
     expect(err.userMessage).toMatch(/unexpected format/);
+  });
+});
+
+describe("ssbFetch with a cache", () => {
+  const withStore = (store: CacheStore): ResponseCache => ({
+    store,
+    refreshTimes: ["05:00", "08:00", "11:30"],
+    timeZone: "Europe/Oslo",
+  });
+
+  it("serves a repeated request from the cache", async () => {
+    const cache = withStore(createMemoryStore());
+    const { fetch, sleep } = setup(json(search));
+
+    const first = await searchPopulation({ fetch, sleep, cache });
+    const second = await searchPopulation({ fetch, sleep, cache });
+
+    expect(second).toEqual(first);
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it("stores responses under the request url with a positive TTL", async () => {
+    const store = createMemoryStore();
+    const set = vi.spyOn(store, "set");
+    const { fetch, sleep } = setup(json(search));
+
+    const res = await searchPopulation({
+      fetch,
+      sleep,
+      cache: withStore(store),
+    });
+
+    expect(set).toHaveBeenCalledExactlyOnceWith(
+      res.url,
+      res.data,
+      expect.any(Number),
+    );
+    expect(set.mock.calls[0][2]).toBeGreaterThan(0);
+  });
+
+  it("does not cache failed responses", async () => {
+    const cache = withStore(createMemoryStore());
+    const { fetch, sleep } = setup(
+      json(error404.body, error404.status),
+      json(search),
+    );
+
+    await expect(
+      searchPopulation({ fetch, sleep, cache }),
+    ).rejects.toBeInstanceOf(SsbNotFoundError);
+    const res = await searchPopulation({ fetch, sleep, cache });
+
+    expect(res.data.tables).toHaveLength(5);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("refetches when a cached value no longer matches the schema", async () => {
+    const store = createMemoryStore();
+    const { fetch, sleep } = setup(json(search));
+    await store.set(
+      "https://data.ssb.no/api/pxwebapi/v2/tables?lang=en&query=population",
+      { stale: true },
+      60,
+    );
+
+    const res = await searchPopulation({
+      fetch,
+      sleep,
+      cache: withStore(store),
+    });
+
+    expect(res.data.tables).toHaveLength(5);
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it("falls through to the API when the cache store throws", async () => {
+    const broken: CacheStore = {
+      get: vi.fn().mockRejectedValue(new Error("redis down")),
+      set: vi.fn().mockRejectedValue(new Error("redis down")),
+    };
+    const { fetch, sleep } = setup(json(search));
+
+    const res = await searchPopulation({
+      fetch,
+      sleep,
+      cache: withStore(broken),
+    });
+
+    expect(res.data.tables).toHaveLength(5);
+    expect(broken.set).toHaveBeenCalledOnce();
   });
 });
