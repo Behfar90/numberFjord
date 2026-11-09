@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const linkClass = "underline underline-offset-2";
 
 export function SiteFooter() {
@@ -28,6 +30,11 @@ export function SiteFooter() {
         </a>
         . Values in charts and tables are shown as published; calculations in
         answer text are marked as such.
+      </p>
+      <p>
+        <Link href="/privacy" className={linkClass}>
+          Privacy
+        </Link>
       </p>
     </footer>
   );
