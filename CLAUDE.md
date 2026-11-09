@@ -36,7 +36,8 @@ Run lint, type check and tests before considering a task done.
   `searchTables`, `getTableMetadata`, `queryTable`; `ssb` (in `index.ts`) is the SSB
   instance. Nothing SSB-specific lives outside that config.
 - `src/lib/ssb/__fixtures__/` – saved real API responses used in tests
-- `src/lib/agent/` – tools, agent loop, system prompt, chat route handler
+- `src/lib/cache/` – Upstash Redis client shared by the SSB cache and rate limiter
+- `src/lib/agent/` – tools, agent loop, system prompt, chat route handler, rate limit
 - `src/lib/charts/` – visual specs and the query-result → chart/table builder
 - `src/components/charts/`, `src/components/chat/` – visuals, trace, chat UI
 - `src/app/` – routes and UI
@@ -87,7 +88,7 @@ Run lint, type check and tests before considering a task done.
 
 ## Status
 
-Week 3 of 8 complete (see plan below).
+Week 4 of 8 complete (see plan below).
 Done: Next.js app scaffolded, shadcn initialized, deployed to Vercel
 (https://number-fjord.vercel.app/), README stub, Husky + commitlint, CI (lint, typecheck,
 tests), `main` ruleset, SSB client (`src/lib/ssb/`) with real-response fixtures and tests.
@@ -100,7 +101,15 @@ from stored query results (`src/lib/charts/`, `showVisual` tool), Recharts chart
 table components with a validated colorblind-safe palette (`src/components/charts/`),
 collapsible agent trace with raw API links, source lines on every visual plus a
 per-answer source footer, decision log and API notes (`docs/`).
-Next: week 4 – caching, rate limiting, error states, disclaimers, privacy page.
+Week 4: Upstash Redis (Vercel Marketplace, free plan, `iad1`) caches SSB responses until
+the next SSB update (05:00, 08:00, 11:30 Oslo) and keeps them 7 more days as an outage
+fallback, labelled "cached copy" in source lines (`src/lib/ssb/cache.ts`,
+`src/lib/cache/redis.ts`). Per-IP rate limit on `/api/chat` (5/min, 50/day, hashed IPs,
+fails open; `src/lib/agent/rate-limit.ts`). SSB tool errors tell the model whether to
+retry or stop (`src/lib/agent/tool-errors.ts`). Site footer with "not affiliated" and
+CC BY 4.0, AI disclaimer under the input, `/privacy` page. Without Redis env vars, cache
+and rate limit are off (tests, CI).
+Next: week 5 – catalog in Postgres + pgvector, hybrid search, accuracy before/after.
 
 ## 8-week plan (summary)
 

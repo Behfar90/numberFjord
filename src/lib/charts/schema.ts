@@ -38,6 +38,7 @@ export interface QueryResultSummary {
   measure?: string;
   updated: string;
   tableUrl: string;
+  staleSince?: string;
   fixed: Record<string, string>;
   columns: string[];
   rows: (string | number | null)[][];
@@ -50,6 +51,8 @@ export interface Source {
   tableUrl: string;
   updated: string;
   license: "CC BY 4.0";
+  // When the source was down and a cached copy fetched at this time was used.
+  staleSince?: string;
 }
 
 export interface ChartSeries {

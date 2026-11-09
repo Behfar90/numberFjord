@@ -91,6 +91,24 @@ describe("handleChat", () => {
     expect(response.status).toBe(400);
     expect(model.doStreamCalls).toHaveLength(0);
   });
+
+  it("answers 429 with Retry-After when a rate limit is hit", async () => {
+    const { agent, model } = setup();
+    const limiter = {
+      limit: async () => ({ success: false, reset: Date.now() + 42_000 }),
+    };
+
+    const response = await handleChat(
+      post({ messages: [userMessage("Hello")] }),
+      agent,
+      [limiter],
+    );
+
+    expect(response.status).toBe(429);
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(40);
+    expect((await response.json()).error).toMatch(/try again in \d+ seconds/);
+    expect(model.doStreamCalls).toHaveLength(0);
+  });
 });
 
 function apiError(statusCode: number, isRetryable?: boolean) {

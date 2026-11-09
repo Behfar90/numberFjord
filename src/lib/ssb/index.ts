@@ -1,4 +1,8 @@
+import { createRedisStore } from "@/lib/cache/redis";
+
 import { createPxClient, type PxConfig } from "./client";
+
+const cacheStore = createRedisStore();
 
 export const SSB_CONFIG: PxConfig = {
   baseUrl: "https://data.ssb.no/api/pxwebapi/v2",
@@ -8,6 +12,13 @@ export const SSB_CONFIG: PxConfig = {
   tableIdPattern: /^\d{5}$/,
   tableUrl: (tableId, lang) =>
     `https://www.ssb.no${lang === "en" ? "/en" : ""}/statbank/table/${tableId}`,
+  // New statistics at 08:00, metadata updates at 05:00 and 11:30 (Oslo time).
+  cache: cacheStore && {
+    store: cacheStore,
+    refreshTimes: ["05:00", "08:00", "11:30"],
+    timeZone: "Europe/Oslo",
+    staleSeconds: 7 * 24 * 3_600,
+  },
 };
 
 export const ssb = createPxClient(SSB_CONFIG);

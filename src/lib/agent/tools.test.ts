@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createPxClient, SSB_CONFIG, type TableMetadata } from "@/lib/ssb";
 import data from "@/lib/ssb/__fixtures__/data-07459-oslo.json";
+import error404 from "@/lib/ssb/__fixtures__/error-404.json";
 import metadata from "@/lib/ssb/__fixtures__/metadata-07459.json";
 import search from "@/lib/ssb/__fixtures__/search-population.json";
 
@@ -11,6 +12,7 @@ import {
   createPxTools,
   MAX_QUERY_CELLS,
   summarizeMetadata,
+  summarizeResult,
 } from "./tools";
 
 function routedFetch() {
@@ -265,5 +267,55 @@ describe("showVisual tool", () => {
         visual: { kind: "table", title: "Oslo" },
       }),
     ).rejects.toThrow(/call queryTable again/);
+  });
+});
+
+describe("SSB errors in tools", () => {
+  function failingTools(status: number, body: unknown) {
+    const fetch = vi.fn<typeof globalThis.fetch>(
+      async () => new Response(JSON.stringify(body), { status }),
+    );
+    return createPxTools(createPxClient({ ...SSB_CONFIG, fetch }));
+  }
+
+  it("tells the model to stop when SSB is down", async () => {
+    const tools = failingTools(503, { title: "Service Unavailable" });
+
+    await expect(
+      run(tools.searchTables, { query: "population" }),
+    ).rejects.toThrow(/Do not retry/);
+  });
+
+  it("tells the model to search again for an unknown table", async () => {
+    const tools = failingTools(error404.status, error404.body);
+
+    await expect(
+      run(tools.getTableMetadata, { tableId: "99999" }),
+    ).rejects.toThrow(/search again/);
+  });
+});
+
+describe("summarizeResult", () => {
+  const live = {
+    tableId: "07459",
+    dataset: data as unknown as Parameters<
+      typeof summarizeResult
+    >[0]["dataset"],
+    source: "Statistics Norway",
+    sourceUrl: "https://data.ssb.no/api/pxwebapi/v2/tables/07459/data",
+    tableUrl: "https://www.ssb.no/en/statbank/table/07459",
+  };
+
+  it("adds no stale fields for live data", () => {
+    expect(summarizeResult(live)).not.toHaveProperty("staleNote");
+  });
+
+  it("tells the model when the data is a cached copy", () => {
+    const summary = summarizeResult({
+      ...live,
+      staleSince: "2026-11-09T10:07:00.000Z",
+    });
+    expect(summary.staleSince).toBe("2026-11-09T10:07:00.000Z");
+    expect(summary.staleNote).toMatch(/cached copy.*Tell the user/);
   });
 });

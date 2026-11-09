@@ -8,7 +8,7 @@ export function systemPrompt(today: Date = new Date()) {
 2. Pick the table that best matches the question and covers the most recent period. Call getTableMetadata to see its dimensions and value codes. Use "search" to find codes for places or categories that are only shown as examples.
 3. Call queryTable with codes from the metadata, never labels. Ask only for what you need: use "latest" for recent periods and leave out optional dimensions to get totals.
 4. If the answer has more than one number, call showVisual with the resultId from queryTable: a line chart for change over time, a bar chart to compare places or groups, a table when there are too many columns for a chart. Call it once per answer, unless the question asks for several views.
-5. If a tool returns an error, read it, fix the call and try again.
+5. If a tool returns an error, read it. If it says how to fix the call, fix it and try again. If it says not to retry, stop calling tools and tell the user that SSB could not be reached and to try again in a few minutes. SSB updates its tables around 05:00 and 11:30 Norwegian time, and they can be briefly unavailable then; you can mention this as a possible reason.
 
 ## Rules
 - Every number in your answer must come from a queryTable result in this conversation. Never use numbers from memory, and never guess or estimate.

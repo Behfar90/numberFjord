@@ -14,6 +14,8 @@ import {
   type TableSummary,
 } from "@/lib/ssb";
 
+import { withToolErrors } from "./tool-errors";
+
 const SEARCH_PAGE_SIZE = 10;
 const MAX_LISTED_VALUES = 40;
 const MAX_EXAMPLES = 10;
@@ -177,6 +179,10 @@ export function summarizeResult(result: QueryResult) {
     tableUrl: result.tableUrl,
     sourceUrl: result.sourceUrl,
     ...(dataset.note && { notes: dataset.note }),
+    ...(result.staleSince && {
+      staleSince: result.staleSince,
+      staleNote: `${result.source} could not be reached, so this is a cached copy fetched at ${result.staleSince}. Tell the user, and that it may miss a newer release.`,
+    }),
     fixed,
     columns: [...varying.map((code) => dataset.dimension[code].label), "value"],
     rows: rows.map((row) => [
@@ -211,13 +217,14 @@ export function createPxTools(client: PxClient) {
             "A few English keywords, e.g. 'population municipality' or 'consumer price index'",
           ),
       }),
-      execute: async ({ query }, { abortSignal }) => {
-        const tables = await client.searchTables(query, {
-          pageSize: SEARCH_PAGE_SIZE,
-          signal: abortSignal,
-        });
-        return { tables: tables.map(summarizeTable) };
-      },
+      execute: ({ query }, { abortSignal }) =>
+        withToolErrors(sourceName, async () => {
+          const tables = await client.searchTables(query, {
+            pageSize: SEARCH_PAGE_SIZE,
+            signal: abortSignal,
+          });
+          return { tables: tables.map(summarizeTable) };
+        }),
     }),
 
     getTableMetadata: tool({
@@ -230,8 +237,10 @@ export function createPxTools(client: PxClient) {
           .optional()
           .describe("Value names to look up, e.g. ['Oslo', 'Bergen']"),
       }),
-      execute: async ({ tableId, search }, { abortSignal }) =>
-        summarizeMetadata(await getMetadata(tableId, abortSignal), search),
+      execute: ({ tableId, search }, { abortSignal }) =>
+        withToolErrors(sourceName, async () =>
+          summarizeMetadata(await getMetadata(tableId, abortSignal), search),
+        ),
     }),
 
     queryTable: tool({
@@ -257,17 +266,18 @@ export function createPxTools(client: PxClient) {
           }),
         ),
       }),
-      execute: async ({ tableId, selection }, { abortSignal, toolCallId }) => {
-        const meta = await getMetadata(tableId, abortSignal);
-        const result = await client.queryTable(
-          tableId,
-          buildSelection(meta, selection),
-          { metadata: meta, signal: abortSignal },
-        );
-        const summary = summarizeResult(result);
-        results.set(toolCallId, summary);
-        return { resultId: toolCallId, ...summary };
-      },
+      execute: ({ tableId, selection }, { abortSignal, toolCallId }) =>
+        withToolErrors(sourceName, async () => {
+          const meta = await getMetadata(tableId, abortSignal);
+          const result = await client.queryTable(
+            tableId,
+            buildSelection(meta, selection),
+            { metadata: meta, signal: abortSignal },
+          );
+          const summary = summarizeResult(result);
+          results.set(toolCallId, summary);
+          return { resultId: toolCallId, ...summary };
+        }),
     }),
 
     showVisual: tool({

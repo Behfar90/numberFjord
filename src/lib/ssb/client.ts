@@ -53,6 +53,7 @@ export interface QueryResult {
   source: string;
   sourceUrl: string;
   tableUrl: string;
+  staleSince?: string;
 }
 
 export type PxClient = ReturnType<typeof createPxClient>;
@@ -124,7 +125,7 @@ export function createPxClient(config: PxConfig) {
       );
     }
 
-    const { data, url } = await ssbFetch(
+    const { data, url, staleSince } = await ssbFetch(
       config,
       `/tables/${tableId}/data`,
       toQueryParams(selection, codelists),
@@ -137,6 +138,7 @@ export function createPxClient(config: PxConfig) {
       source,
       sourceUrl: url,
       tableUrl: config.tableUrl(tableId, lang),
+      ...(staleSince && { staleSince }),
     };
   }
 

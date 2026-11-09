@@ -2,6 +2,11 @@ import { APICallError, createAgentUIStreamResponse, RetryError } from "ai";
 import { z } from "zod";
 
 import type { NumberfjordAgent } from "./agent";
+import {
+  checkRateLimit,
+  rateLimitMessage,
+  type RateLimiter,
+} from "./rate-limit";
 
 // Every message is resent to the model on each step, so long chats get expensive.
 export const MAX_MESSAGES = 20;
@@ -10,7 +15,19 @@ const chatRequestSchema = z.object({
   messages: z.array(z.unknown()).min(1).max(MAX_MESSAGES),
 });
 
-export async function handleChat(request: Request, agent: NumberfjordAgent) {
+export async function handleChat(
+  request: Request,
+  agent: NumberfjordAgent,
+  rateLimiters: RateLimiter[] = [],
+) {
+  const retryAfter = await checkRateLimit(request, rateLimiters);
+  if (retryAfter !== undefined) {
+    return Response.json(
+      { error: rateLimitMessage(retryAfter) },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
+    );
+  }
+
   const body = chatRequestSchema.safeParse(
     await request.json().catch(() => null),
   );
