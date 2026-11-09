@@ -115,34 +115,40 @@ export function Chat() {
         </div>
       )}
 
-      <form
-        className="bg-background sticky bottom-0 mt-auto flex gap-2 py-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(input);
-        }}
-      >
-        <label htmlFor="question" className="sr-only">
-          Ask a question about Norway
-        </label>
-        <input
-          id="question"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question about Norway…"
-          autoComplete="off"
-          className="border-input bg-background focus-visible:ring-ring/50 h-9 flex-1 rounded-md border px-3 text-sm outline-none focus-visible:ring-3"
-        />
-        {busy ? (
-          <Button type="button" variant="outline" onClick={() => stop()}>
-            Stop
-          </Button>
-        ) : (
-          <Button type="submit" disabled={!input.trim()}>
-            Ask
-          </Button>
-        )}
-      </form>
+      <div className="bg-background sticky bottom-0 mt-auto flex flex-col gap-2 py-4">
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
+          }}
+        >
+          <label htmlFor="question" className="sr-only">
+            Ask a question about Norway
+          </label>
+          <input
+            id="question"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask a question about Norway…"
+            autoComplete="off"
+            className="border-input bg-background focus-visible:ring-ring/50 h-9 flex-1 rounded-md border px-3 text-sm outline-none focus-visible:ring-3"
+          />
+          {busy ? (
+            <Button type="button" variant="outline" onClick={() => stop()}>
+              Stop
+            </Button>
+          ) : (
+            <Button type="submit" disabled={!input.trim()}>
+              Ask
+            </Button>
+          )}
+        </form>
+        <p className="text-muted-foreground text-xs">
+          Answers are written by an AI model and can contain mistakes. Check
+          numbers against the linked tables.
+        </p>
+      </div>
     </div>
   );
 }

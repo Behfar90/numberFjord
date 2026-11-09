@@ -6,8 +6,7 @@ export default function Home() {
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">Numberfjord</h1>
         <p className="text-muted-foreground text-sm">
-          Ask about Norway. Answers use live data from Statistics Norway (CC BY
-          4.0). Not affiliated with Statistics Norway.
+          Ask about Norway. Answers use live data from Statistics Norway.
         </p>
       </header>
       <Chat />
